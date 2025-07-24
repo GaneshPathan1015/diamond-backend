@@ -457,6 +457,9 @@ class ProductController extends Controller
             'variations.metalColor' => function ($query) {
                 $query->select('dmt_id', 'dmt_name', 'dmt_tooltip', 'color_code');
             },
+            'variations.shape' => function ($query) {
+                $query->select('id', 'name', 'image');
+            },
         ])->where('products_id', $id)->first();
 
         if (!$product) {
@@ -492,6 +495,11 @@ class ProductController extends Controller
                     'name' => $variation->metalColor->dmt_name,
                     'quality' => $variation->metalColor->dmt_tooltip,
                     'hex' => $variation->metalColor->color_code ?? null,
+                ] : null,
+                'shape' => $variation->shape ? [
+                    'id' => $variation->shape->id,
+                    'name' => $variation->shape->name,
+                    'image' => $variation->shape->image ? asset('storage/shapes/' . $variation->shape->image) : null,
                 ] : null,
                 'weight' => $variation->weight,
                 'images' => $variation->images,
