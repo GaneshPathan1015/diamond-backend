@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class DiamondLab extends Model
 {
     use HasFactory;
-
+ 
     protected $table = 'diamond_lab_master';
 
     protected $primaryKey = 'dl_id';

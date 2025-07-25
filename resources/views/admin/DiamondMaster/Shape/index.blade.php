@@ -4,10 +4,10 @@
     <div class="container-xxl flex-grow-1 container-p-y">
         <div class="card">
             <div class="card-header d-flex justify-content-between">
-                <h4 class="mb-3">Diamond shape Master</h4>
+                <h4 class="mb-3">Diamond Shape Master</h4>
                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#shapeModal" id="addshapeBtn">
                     Add New
-                </button>
+                </button> 
             </div>
 
             <div class="table-responsive text-nowrap card-body">
@@ -18,13 +18,7 @@
                             <th>Name</th>
                             <th>Alise</th>
                             <th>Short Name</th>
-                            {{-- <th>Rap Shape</th>
                             <th>Image</th>
-                            <th>Image2</th>
-                            <th>Image3</th>
-                            <th>Image4</th>
-                            <th>Svg image</th>
-                            <th>Remark</th> --}}
                             <th>Display In Front</th>
                             <th>Display In Stud</th>
                             <th>Sort Order</th>
@@ -44,7 +38,7 @@
     <!-- Modal -->
     <div class="modal fade" id="shapeModal" tabindex="-1" aria-labelledby="shapeModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <form id="shapeForm">
+            <form id="shapeForm" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" id="record_id" name="id">
                 <div class="modal-content">
@@ -65,26 +59,37 @@
                             <label>Short Name</label>
                             <input type="text" class="form-control" id="shortname" name="shortname">
                         </div>
-                        <div class="col-6">
-                            <label>Rap Shape</label>
-                            <input type="text" class="form-control" id="rap_shape" name="rap_shape">
-                        </div>
-                        <div class="col-6">
+                        
+                        <!-- Image Upload Section -->
+                        <div class="col-12">
                             <label>Image</label>
-                            <input type="text" class="form-control" id="image" name="image">
+                            <input type="file" class="form-control" id="image" name="image">
+                            <div id="image_preview" class="mt-2"></div>
+                            <input type="hidden" id="existing_image" name="existing_image">
                         </div>
-                        <div class="col-6">
+                        
+                        <div class="col-12">
                             <label>Image2</label>
-                            <input type="text" class="form-control" id="image2" name="image2">
+                            <input type="file" class="form-control" id="image2" name="image2">
+                            <div id="image2_preview" class="mt-2"></div>
+                            <input type="hidden" id="existing_image2" name="existing_image2">
                         </div>
-                        <div class="col-6">
+                        
+                        <div class="col-12">
                             <label>Image3</label>
-                            <input type="text" class="form-control" id="image3" name="image3">
+                            <input type="file" class="form-control" id="image3" name="image3">
+                            <div id="image3_preview" class="mt-2"></div>
+                            <input type="hidden" id="existing_image3" name="existing_image3">
                         </div>
-                        <div class="col-6">
+                        
+                        <div class="col-12">
                             <label>Image4</label>
-                            <input type="text" class="form-control" id="image4" name="image4">
+                            <input type="file" class="form-control" id="image4" name="image4">
+                            <div id="image4_preview" class="mt-2"></div>
+                            <input type="hidden" id="existing_image4" name="existing_image4">
                         </div>
+                        <!-- End Image Upload Section -->
+                        
                         <div class="col-12">
                             <label>SVG Image</label>
                             <textarea class="form-control" id="svg_image" name="svg_image" rows="2"></textarea>
@@ -119,6 +124,7 @@
         </div>
     </div>
 
+
     <script>
         function formatDateForInput(dateString) {
             if (!dateString) return "";
@@ -142,18 +148,20 @@
                             <tr>
                                 <td>${r.id}</td>
                                 <td>${r.name ?? ''}</td>
-                               <td>${r.ALIAS ? r.ALIAS.substring(0, 10) + (r.ALIAS.length > 10 ? '...' : '') : ''}</td>
+                                <td>${r.ALIAS ? r.ALIAS.substring(0, 10) + (r.ALIAS.length > 10 ? '...' : '') : ''}</td>
                                 <td>${r.shortname ?? ''}</td>
                                 <td>
-                        <input type="checkbox" ${r.display_in_front == 1 ? 'checked' : ''} class="display-in-front" data-id="${r.id}">
-                    </td>
-                    <td>
-                        <input type="checkbox" ${r.display_in_stud == 1 ? 'checked' : ''} class="display-in-stud" data-id="${r.id}">
-                    </td>
-                   <td>
-                     <input type="number" value="${r.sort_order}" class="sort-order" data-id="${r.id}" style="width: 60px;">
-                    </td>
-
+                                    ${r.image ? `<img src="{{ asset('storage/shapes/${r.image}') }}" width="50">` : ''}
+                                </td>
+                                <td>
+                                    <input type="checkbox" ${r.display_in_front == 1 ? 'checked' : ''} class="display-in-front" data-id="${r.id}">
+                                </td>
+                                <td>
+                                    <input type="checkbox" ${r.display_in_stud == 1 ? 'checked' : ''} class="display-in-stud" data-id="${r.id}">
+                                </td>
+                                <td>
+                                    <input type="number" value="${r.sort_order}" class="sort-order" data-id="${r.id}" style="width: 60px;">
+                                </td>
                                 <td>${r.date_added ? r.date_added : ''}</td>
                                 <td>${r.date_modify ? r.date_modify: ''}</td>
                                 <td>
@@ -164,12 +172,52 @@
                         `;
                     });
                     renderDataTable('shapeTable', rows);
-
                 });
             }
 
+             // Function to preview image
+            function previewImage(input, previewId, existingId) {
+                if (input.files && input.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        $(previewId).html(`
+                            <div class="d-flex align-items-center">
+                                <img src="${e.target.result}" class="img-thumbnail mt-2" width="100">
+                                <button type="button" class="btn btn-danger btn-sm ms-2 remove-preview">Remove</button>
+                            </div>
+                        `);
+                    }
+                    reader.readAsDataURL(input.files[0]);
+                    $(existingId).val(''); // Clear existing image value
+                }
+            }
+
+             // Initialize image previews
+            $("#image").change(function() {
+                previewImage(this, '#image_preview', '#existing_image');
+            });
+            
+            $("#image2").change(function() {
+                previewImage(this, '#image2_preview', '#existing_image2');
+            });
+            
+            $("#image3").change(function() {
+                previewImage(this, '#image3_preview', '#existing_image3');
+            });
+            
+            $("#image4").change(function() {
+                previewImage(this, '#image4_preview', '#existing_image4');
+            });
+
+            // Remove image preview
+            $(document).on('click', '.remove-preview', function() {
+                $(this).closest('.d-flex').remove();
+                $(this).siblings('input[type="file"]').val('');
+            });
+
             $('#addshapeBtn').on('click', function() {
                 $('#shapeForm')[0].reset();
+                $('.image-preview').empty();
                 $('#record_id').val('');
                 $('#formError').text('');
                 $('#saveShapeBtn').text('Save');
@@ -179,23 +227,101 @@
                 let id = $(this).data('id');
                 $.get("{{ url('admin/shapes') }}/" + id, function(data) {
                     $('#shapeForm')[0].reset();
+                    $('.image-preview').empty();
                     $('#formError').text('');
+                    
                     $('#record_id').val(data.id);
                     $('#name').val(data.name);
                     $('#alise').val(data.ALIAS);
                     $('#shortname').val(data.shortname);
                     $('#rap_shape').val(data.rap_shape);
-                    $('#image').val(data.image);
-                    $('#image2').val(data.image2);
-                    $('#image3').val(data.image3);
-                    $('#image4').val(data.image4);
                     $('#svg_image').val(data.svg_image);
                     $('#remark').val(data.remark);
                     $('#display_in_front').val(data.display_in_front);
                     $('#display_in_stud').val(data.display_in_stud);
                     $('#sort_order').val(data.sort_order);
+                    
+                    // Set existing images
+                    if (data.image) {
+                        $('#image_preview').html(`
+                            <div class="d-flex align-items-center">
+                                <img src="{{ asset('storage/shapes/${data.image}') }}" class="img-thumbnail mt-2" width="100">
+                                <button type="button" class="btn btn-danger btn-sm ms-2 remove-existing" data-field="image">Remove</button>
+                            </div>
+                        `);
+                        $('#existing_image').val(data.image);
+                    }
+                    
+                    if (data.image2) {
+                        $('#image2_preview').html(`
+                            <div class="d-flex align-items-center">
+                                <img src="{{ asset('storage/shapes/${data.image2}') }}" class="img-thumbnail mt-2" width="100">
+                                <button type="button" class="btn btn-danger btn-sm ms-2 remove-existing" data-field="image2">Remove</button>
+                            </div>
+                        `);
+                        $('#existing_image2').val(data.image2);
+                    }
+                    
+                    if (data.image3) {
+                        $('#image3_preview').html(`
+                            <div class="d-flex align-items-center">
+                                <img src="{{ asset('storage/shapes/${data.image3}') }}" class="img-thumbnail mt-2" width="100">
+                                <button type="button" class="btn btn-danger btn-sm ms-2 remove-existing" data-field="image3">Remove</button>
+                            </div>
+                        `);
+                        $('#existing_image3').val(data.image3);
+                    }
+                    
+                    if (data.image4) {
+                        $('#image4_preview').html(`
+                            <div class="d-flex align-items-center">
+                                <img src="{{ asset('storage/shapes/${data.image4}') }}" class="img-thumbnail mt-2" width="100">
+                                <button type="button" class="btn btn-danger btn-sm ms-2 remove-existing" data-field="image4">Remove</button>
+                            </div>
+                        `);
+                        $('#existing_image4').val(data.image4);
+                    }
+                    
                     $('#shapeModal').modal('show');
                     $('#saveShapeBtn').text('Update');
+                });
+            });
+
+            // Remove existing image
+            $(document).on('click', '.remove-existing', function() {
+                const field = $(this).data('field');
+                $(`#${field}_preview`).html('<div class="text-danger">Image will be removed on save</div>');
+                $(`#existing_${field}`).val(''); // Clear existing value
+            });
+
+            $('#shapeForm').submit(function(e) {
+                e.preventDefault();
+                const id = $('#record_id').val();
+                const method = id ? 'PUT' : 'POST';
+                const url = id ?
+                    `{{ url('admin/shapes') }}/${id}` :
+                    "{{ route('shapes.store') }}";
+                
+                let formData = new FormData(this);
+                formData.append('_method', method);
+                
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function() {
+                        $('#shapeModal').modal('hide');
+                        fetchRecords();
+                        toastr.success("Record saved successfully!");
+                    },
+                    error: function(xhr) {
+                        let errors = xhr.responseJSON?.errors || {};
+                        let msg = Object.values(errors).join('<br>');
+                        $('#formError').html(msg || 'An error occurred');
+                        toastr.error("Failed to save record!");
+                    }
                 });
             });
 
@@ -247,33 +373,6 @@
                 });
             });
 
-            $('#shapeForm').submit(function(e) {
-                e.preventDefault();
-                const id = $('#record_id').val();
-
-                const method = id ? 'PUT' : 'POST';
-                const url = id ?
-                    `{{ url('admin/shapes') }}/${id}` :
-                    "{{ route('shapes.store') }}";
-                let formData = $(this).serialize();
-                formData += `&_method=${method}`;
-                $.ajax({
-                    url: url,
-                    type: 'POST',
-                    data: formData,
-                    success: function() {
-                        $('#shapeModal').modal('hide');
-                        fetchRecords();
-                        toastr.success("Record saved successfully!");
-                    },
-                    error: function(xhr) {
-                        let errors = xhr.responseJSON?.errors || {};
-                        let msg = Object.values(errors).join('<br>');
-                        $('#formError').html(msg || 'An error occurred');
-                        toastr.error("Failed to save record!");
-                    }
-                });
-            });
             $(document).on('change', '.display-in-front', function() {
                 const id = $(this).data('id');
                 const status = $(this).prop('checked') ? 1 : 0;

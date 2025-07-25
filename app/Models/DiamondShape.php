@@ -6,7 +6,7 @@ use App\Models\DiamondMaster;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class DiamondShape extends Model
+class DiamondShape extends Model 
 {
     use HasFactory;
     protected $table = 'diamond_shape_master';

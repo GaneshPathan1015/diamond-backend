@@ -5,12 +5,13 @@ namespace App\Http\Controllers\DiamondMaster;
 use App\Http\Controllers\Controller;
 use App\Models\DiamondShape;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class DiamondShapeController extends Controller
 {
     public function index(Request $request)
     {
-        if ($request->ajax()) {
+        if ($request->ajax()) { 
             $shapes = DiamondShape::all();
             return response()->json($shapes);
         }
@@ -19,54 +20,77 @@ class DiamondShapeController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'nullable|string',
-            'ALIAS' => 'nullable|string',
-            'shortname' => 'nullable|string|max:15',
-            'rap_shape' => 'nullable|string',
-            'image' => 'nullable|string',
-            'image2' => 'nullable|string',
-            'image3' => 'nullable|string',
-            'image4' => 'nullable|string',
-            'svg_image' => 'nullable|string',
-            'remark' => 'nullable|string',
-            'display_in_front' => 'nullable|integer',
-            'display_in_stud' => 'nullable|integer',
-            'sort_order' => 'nullable|integer',
-        ]);
+        $data = $this->validateRequest($request);
+        $data = $this->handleImageUploads($request, $data);
         $data['date_added'] = now();
+        
         DiamondShape::create($data);
 
-        return redirect()->route('shapes.index')
-            ->with('success', 'Record added successfully.');
+        return response()->json(['success' => true, 'message' => 'Record added successfully.']);
     }
 
     public function update(Request $request, $id)
     {
         $shape = DiamondShape::findOrFail($id);
+        $data = $this->validateRequest($request);
+        $data = $this->handleImageUploads($request, $data, $shape);
+        $data['date_modify'] = now();
+        
+        $shape->update($data);
 
-        $data = $request->validate([
+        return response()->json(['success' => true, 'message' => 'Record updated successfully.']);
+    }
+
+    private function validateRequest(Request $request)
+    {
+        return $request->validate([
             'name' => 'nullable|string',
             'ALIAS' => 'nullable|string',
             'shortname' => 'nullable|string|max:15',
             'rap_shape' => 'nullable|string',
-            'image' => 'nullable|string',
-            'image2' => 'nullable|string',
-            'image3' => 'nullable|string',
-            'image4' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'image2' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'image3' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'image4' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'svg_image' => 'nullable|string',
-            'remark' => 'nullable|string',
+            'remark' => 'nullable|integer',
             'display_in_front' => 'nullable|integer',
             'display_in_stud' => 'nullable|integer',
             'sort_order' => 'nullable|integer',
-            'date_added' => 'nullable|date',
-            'date_modify' => 'nullable|date',
         ]);
-        $data['date_modify'] = now();
-        $shape->update($data);
+    }
 
-        return redirect()->route('shapes.index')
-            ->with('success', 'Record updated successfully.');
+    private function handleImageUploads(Request $request, array $data, $existingRecord = null)
+    {
+        $imageFields = ['image', 'image2', 'image3', 'image4'];
+        
+        foreach ($imageFields as $field) {
+            // Handle new uploads
+            if ($request->hasFile($field)) {
+                // Delete old image if exists
+                if ($existingRecord && $existingRecord->$field) {
+                    Storage::delete('public/shapes/'.$existingRecord->$field);
+                }
+                
+                // Store new image
+                $path = $request->file($field)->store('public/shapes');
+                $data[$field] = basename($path);
+            }
+            // Handle existing image removal
+            elseif ($request->input('existing_'.$field) === '') {
+                // Delete existing image
+                if ($existingRecord && $existingRecord->$field) {
+                    Storage::delete('public/shapes/'.$existingRecord->$field);
+                }
+                $data[$field] = null;
+            }
+            // Keep existing image
+            elseif ($existingRecord) {
+                $data[$field] = $existingRecord->$field;
+            }
+        }
+        
+        return $data;
     }
 
     public function destroy($id)
