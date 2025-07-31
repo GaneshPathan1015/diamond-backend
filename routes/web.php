@@ -50,6 +50,7 @@ use App\Http\Controllers\Jewellery\ShopTaxClassesController;
 use App\Http\Controllers\Jewellery\ShopTaxRateController;
 use App\Http\Controllers\Jewellery\CollectionController;
 use App\Http\Controllers\ProductImportController;
+use App\Http\Controllers\Admin\DashboardController;
 
 Route::get('/import-products', [ProductImportController::class, 'showForm'])->name('products.import.form');
 Route::post('/import-products', [ProductImportController::class, 'import'])->name('products.import');
@@ -72,11 +73,12 @@ Route::post('/password/email', [AuthController::class, 'sendResetLink'])->name('
 Route::get('password/reset/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
 Route::post('/password/reset', [AuthController::class, 'forgetPassword']);
 
-
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', function () {
         return view('admin.dashboard'); // welcome page
     })->name('admin.dashboard');
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
     Route::get('/profile', [AdminAuthController::class, 'profile'])->name('admin.profile');
     Route::post('/profile/upload', [AdminAuthController::class, 'upload'])->name('profile.upload');
