@@ -210,4 +210,11 @@ class ShapeController extends Controller
 
     }
 
+    public function shapeData(){
+        $shapes = DiamondShape::select('id', 'name', 'image')->get();
+        return response()->json([
+            'shapes' => $shapes
+        ]);
+    }
+
 }
