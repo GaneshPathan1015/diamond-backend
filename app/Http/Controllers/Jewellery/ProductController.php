@@ -64,7 +64,7 @@ class ProductController extends Controller
                         : '<span class="badge bg-danger">Inactive</span>';
                 })
                 ->editColumn('date_added', function ($product) {
-                    return $product->date_added
+                    return $product->date_added 
                         ? date('d M Y', strtotime($product->date_added))
                         : '';
                 })
@@ -118,7 +118,9 @@ class ProductController extends Controller
         $weightGroups = \App\Models\DiamondWeightGroup::pluck('dwg_name', 'dwg_id');
         $metal_types_colors = \App\Models\MetalType::pluck('dmt_name', 'dmt_id');
         $parentCategories = Category::whereNull('parent_id')->get();
-        $styleCategories = \App\Models\ProductStyleCategory::pluck('psc_name', 'psc_id');
+        $styleCategories = \App\Models\ProductStyleCategory::where('engagement_menu', 1)
+                    ->pluck('psc_name', 'psc_id');
+        // $styleCategories = \App\Models\ProductStyleCategory::pluck('psc_name', 'psc_id');
         $collections = \App\Models\ProductCollection::pluck('name', 'id');
         $styleGroups = ProductStyleGroup::all()
         ->map(function($group) {
@@ -280,10 +282,12 @@ class ProductController extends Controller
             ]);
         }
 
-        ProductToCategory::create([
-            'products_id' => $product->products_id,
-            'categories_id' => $request->categories_id
-        ]);
+        if ($request->filled('categories_id')) {
+            ProductToCategory::create([
+                'products_id' => $product->products_id,
+                'categories_id' => $request->categories_id
+            ]);
+        }
 
         if ($request->filled('options_id')) {
             ProductToOption::create([
@@ -386,7 +390,9 @@ class ProductController extends Controller
         $metal_types_colors = \App\Models\MetalType::pluck('dmt_name', 'dmt_id');
         $parentCategories = Category::whereNull('parent_id')->get();
         $childCategories = Category::where('parent_id', $product->parent_category_id)->get();
-        $styleCategories = \App\Models\ProductStyleCategory::pluck('psc_name', 'psc_id');
+                $styleCategories = \App\Models\ProductStyleCategory::where('engagement_menu', 1)
+                    ->pluck('psc_name', 'psc_id');
+        // $styleCategories = \App\Models\ProductStyleCategory::pluck('psc_name', 'psc_id');
         $collections = \App\Models\ProductCollection::pluck('name', 'id');
         $styleGroups = ProductStyleGroup::all()
         ->map(function($group) {
@@ -739,7 +745,7 @@ class ProductController extends Controller
             'products_status'             => 'required|in:0,1',
             'products_slug'               => 'required|string|max:150',
             'vendor_id'                   => 'required|integer',
-            'categories_id'               => 'required',
+            // 'categories_id'               => 'required',
             'featured_image'              => 'sometimes|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'gallery_images.*'            => 'sometimes|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'variations.*.metal_color_id' => 'required|exists:metal_type,dmt_id',
@@ -750,6 +756,14 @@ class ProductController extends Controller
             'variations.*.price'          => 'required|numeric|min:0|lte:variations.*.regular_price',
             'variations.*.shape_id'       => 'required|exists:diamond_shape_master,id',
         ];
+
+        if (request('is_build_product') == '1') {
+            $rules['psc_id'] = 'required|exists:style_categories,id'; 
+        } else {
+            $rules['categories_id'] = 'required';
+        }
+
+        return $rules;
     }
 
     private function getValidationMessages()
@@ -840,6 +854,8 @@ class ProductController extends Controller
             'variations.*.price.lte' => 'Price must be less than or equal to Regular Price.',
             'variations.*.shape_id.required' => 'Shape is required for all variations.',
             'variations.*.metal_color_id.required' => 'Metal color is required for all variations.',
+            'psc_id.required'         => 'Style Category is required when Build Product is selected.',
+            'categories_id.required'  => 'Product Category is required when Build Product is not selected.',
         ];
     }
 }

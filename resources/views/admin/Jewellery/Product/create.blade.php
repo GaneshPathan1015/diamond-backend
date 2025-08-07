@@ -17,7 +17,7 @@
         list-style: none;
         margin: 0;
         padding: 0 5px;
-        width: 505px !important;
+        width: 505px !important; 
     }
         
         .container-xxl {
@@ -317,9 +317,37 @@
                                                 <div class="error-message" id="error-products_slug"></div>
                                             </div>
 
+                                            <!-- Build Product -->
                                             <div class="col-md-6 mb-3">
+                                                <label class="form-label">Build Product *</label>
+                                                <div>
+                                                    <select name="is_build_product" class="form-select" required>
+                                                        <option selected disabled value="">Select Build Product</option>
+                                                        <option value="1" {{ old('is_build_product', $product->is_build_product ?? '') == '1' ? 'selected' : '' }}>Yes</option>
+                                                        <option value="0" {{ old('is_build_product', $product->is_build_product ?? '') == '0' ? 'selected' : '' }}>No</option>
+                                                    </select>
+                                                    <div class="error-message" id="error-is_build_product"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Style Category (shown for build product = Yes) -->
+                                            <div class="col-md-6 mb-3 build-field">
+                                                <label class="form-label">Style Category *</label>
+                                                <select id="psc_id" name="psc_id" class="form-select">
+                                                    <option value="">Select Style Category</option>
+                                                    @foreach($styleCategories as $id => $name)
+                                                        <option value="{{ $id }}" {{ old('psc_id', $product->psc_id ?? '') == $id ? 'selected' : '' }}>
+                                                            {{ $name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <div class="error-message" id="error-psc_id"></div>
+                                            </div>
+
+                                            <!-- Product Category (shown for build product = No) -->
+                                            <div class="col-md-6 mb-3 non-build-field">
                                                 <label class="form-label">Product Category *</label>
-                                                <select id="categories_id" name="categories_id" class="form-select" required>
+                                                <select id="categories_id" name="categories_id" class="form-select">
                                                     <option value="">Select Category</option>
                                                     @foreach($categories as $parent)
                                                         <optgroup label="{{ $parent->category_name }}" data-parent-id="{{ $parent->category_id }}">
@@ -327,58 +355,41 @@
                                                                 {{ $parent->category_name }} (Parent)
                                                             </option>
                                                             @foreach($parent->children as $child)
-                                                                <option value="{{ $child->category_id }}">
+                                                                <option value="{{ $child->category_id }}" {{ old('categories_id', $product->categories_id ?? '') == $child->category_id ? 'selected' : '' }}>
                                                                     {{ $child->category_name }}
                                                                 </option>
                                                             @endforeach
                                                         </optgroup>
                                                     @endforeach
                                                 </select>
-                                                <div class="error-message" id="error-categories_id"></div>
                                             </div>
 
-                                            <!-- Style Category -->
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Style Category</label>
-                                                <select id="psc_id" name="psc_id" class="form-select">
-                                                    <option value="">Select Style Category</option>
-                                                    @if(isset($product) && $product->psc_id)
-                                                        @foreach($styleCategories as $id => $name)
-                                                            <option value="{{ $id }}" {{ $product->psc_id == $id ? 'selected' : '' }}>
-                                                                {{ $name }}
-                                                            </option>
-                                                        @endforeach
-                                                    @endif
-                                                </select>
-                                            </div>
-
-                                            <!-- Product Collection -->
-                                            <div class="col-md-6 mb-3">
+                                            <!-- Product Collection (shown for build product = No) -->
+                                            <div class="col-md-6 mb-3 non-build-field">
                                                 <label class="form-label">Product Collection</label>
                                                 <select name="product_collection_id" id="collection_select" class="form-select">
                                                     <option value="">Select Collection</option>
                                                     @foreach($collections as $id => $name)
-                                                        <option value="{{ $id }}" {{ isset($product) && $product->product_collection_id == $id ? 'selected' : '' }}>
+                                                        <option value="{{ $id }}" {{ old('product_collection_id', $product->product_collection_id ?? '') == $id ? 'selected' : '' }}>
                                                             {{ $name }}
                                                         </option>
                                                     @endforeach
                                                 </select>
                                             </div>
 
-                                            <!-- Style Group -->
-                                            <div class="col-md-6 mb-3">
+                                            <!-- Style Group (shown for build product = No) -->
+                                            <div class="col-md-6 mb-3 non-build-field">
                                                 <label class="form-label">Style Group</label>
                                                 <select name="product_style_group_id" id="product_style_group_id" class="form-select">
                                                     <option value="">Select Style Group</option>
-                                                    @if(isset($product) && $product->product_style_group_id)
-                                                        @foreach($styleGroups as $id => $name)
-                                                            <option value="{{ $id }}" {{ $product->product_style_group_id == $id ? 'selected' : '' }}>
-                                                                {{ $name }}
-                                                            </option>
-                                                        @endforeach
-                                                    @endif
+                                                    @foreach($styleGroups as $id => $name)
+                                                        <option value="{{ $id }}" {{ old('product_style_group_id', $product->product_style_group_id ?? '') == $id ? 'selected' : '' }}>
+                                                            {{ $name }}
+                                                        </option>
+                                                    @endforeach
                                                 </select>
                                             </div>
+
 
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Vendor *</label>
@@ -492,17 +503,6 @@
                                                     @endforeach
                                                 </select>
                                                 <div class="error-message" id="error-stone_type_id"></div>
-                                            </div>
-
-                                            <!-- Add Build Product Field -->
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Build Product</label>
-                                                <div>
-                                                    <select name="is_build_product" class="form-select" required>
-                                                        <option value="1" selected>Yes</option>
-                                                        <option value="0">No</option>
-                                                    </select>
-                                                </div>
                                             </div>
 
                                             <div class="col-md-6 mb-3">
@@ -1246,6 +1246,25 @@
         if (selectedCategory) {
             $('#categories_id').trigger('change');
         }
+    });
+    function toggleBuildFields() {
+        const isBuild = $('select[name="is_build_product"]').val() === '1';
+
+        if (isBuild) {
+            $('.non-build-field').hide();
+            $('.build-field').show();
+        } else if ($('select[name="is_build_product"]').val() === '0') {
+            $('.non-build-field').show();
+            $('.build-field').show();
+        } else {
+            $('.non-build-field').hide();
+            $('.build-field').hide();
+        }
+    }
+
+    $(document).ready(function () {
+        toggleBuildFields();
+        $('select[name="is_build_product"]').change(toggleBuildFields);
     });
     </script>
 @endsection
