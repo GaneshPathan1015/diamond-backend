@@ -199,20 +199,12 @@ class ShapeController extends Controller
         }
     }
 
-    public function engagementData(){
-        $styles = ProductStyleCategory::select('psc_id', 'psc_name')->where('engagement_menu', 1)->get();
-        $shapes = DiamondShape::select('id', 'name')->get();
+    public function styleShapeData(){
+        $styles = ProductStyleCategory::select('psc_id', 'psc_name', 'psc_image')->where('engagement_menu', 1)->get();
+        $shapes = DiamondShape::select('id', 'name', 'image')->get();
 
         return response()->json([
             'styles' => $styles,
-            'shapes' => $shapes
-        ]);
-
-    }
-
-    public function shapeData(){
-        $shapes = DiamondShape::select('id', 'name', 'image')->get();
-        return response()->json([
             'shapes' => $shapes
         ]);
     }
