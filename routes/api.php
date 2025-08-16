@@ -39,12 +39,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::get('/get-all-products', [ProductController::class, 'jewelryData']);
 Route::get('/get-all-engagementData/{slug?}', [ProductController::class, 'engagementData']);
 Route::get('/jewelry', [CategoryController::class, 'jewelryData']);
-Route::get('/engagement', [ShapeController::class, 'engagementData']);
-Route::get('/get-all-shapeData', [ShapeController::class, 'shapeData']);
+Route::get('/get-all-styleShapeData', [ShapeController::class, 'styleShapeData']);
 Route::get('/product-by-id/{id}', [ProductController::class, 'showById']);
 Route::get('/engagement-buildproduct/{id}', [ProductController::class, 'showBuildProductById']);
 Route::get('/jewelry-product/{id}', [ProductController::class, 'showRegularProductById']);
-
 Route::get('/get-all-diamonds', [DiamondMasterController::class, 'data']);
 Route::post('/contact', [ContactController::class, 'submit']);
 //shape
