@@ -631,10 +631,19 @@ class ProductController extends Controller
             ['sptmt_metal_type_id' => $request->metal_type_id]
         );
 
-        \App\Models\ProductToCategory::updateOrCreate(
-            ['products_id' => $id],
-            ['categories_id' => $request->categories_id]
-        );
+        if ($request->is_build_product == 0) {
+            ProductToCategory::updateOrCreate(
+                ['products_id' => $id],
+                ['categories_id' => $request->categories_id]
+            );
+        } else {
+            ProductToCategory::where('products_id', $id)->delete();
+        }
+
+        // \App\Models\ProductToCategory::updateOrCreate(
+        //     ['products_id' => $id],
+        //     ['categories_id' => $request->categories_id]
+        // );
 
         \App\Models\ProductToOption::updateOrCreate(
             ['products_id' => $id],

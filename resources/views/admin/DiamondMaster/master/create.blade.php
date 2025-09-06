@@ -2,7 +2,7 @@
 @section('main_section')
 <div class="container py-4">
     <h4>Add New Diamond</h4>
-    <form id="createForm" action="{{ route('diamond-master.store') }}" method="POST">
+    <form id="createForm" action="{{ route('diamond-master.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
         @php
@@ -53,10 +53,10 @@
                 ['certificate_date', 'Cert Date', 'date'],
             ];
 
-            $urlFields = [
-                ['image_link', 'Image URL', 'text'],
+            $fileFields = [
+                ['image_file', 'Image File', 'file'],
                 ['cert_link', 'Cert URL', 'text'],
-                ['video_link', 'Video URL', 'text'],
+                ['video_file', 'Video File', 'file'],
             ];
         @endphp
 
@@ -158,20 +158,65 @@
             </div>
         </div>
 
-        {{-- Section: URLs --}}
-        <div class="card mb-4">
-            <div class="card-header"><strong>Media & URLs</strong></div>
+        {{-- Section: Files --}}
+
+         <div class="card mb-4">
+            <div class="card-header"><strong>Media & Files</strong></div>
             <div class="card-body row g-3">
-                @foreach ($urlFields as $f)
+                {{-- Image Upload with Preview --}}
+                <div class="col-md-4">
+                    <label for="image_file" class="form-label">Image File</label>
+                    <input type="file" name="image_file" id="image_file" class="form-control" accept="image/*">
+                    
+                    {{-- Image Preview --}}
+                    <div id="imagePreview" class="mt-2" style="display: none;">
+                        <img id="previewImage" src="#" alt="Preview" class="img-thumbnail" style="max-height: 150px;">
+                        <button type="button" class="btn btn-sm btn-danger mt-2" onclick="removeImage()">
+                            <i class="fa fa-trash"></i> Remove Image
+                        </button>
+                    </div>
+                    
+                    <span class="text-danger" id="error_image_file"></span>
+                </div>
+
+                {{-- Video Upload with Preview --}}
+                <div class="col-md-4">
+                    <label for="video_file" class="form-label">Video File</label>
+                    <input type="file" name="video_file" id="video_file" class="form-control" accept="video/*">
+                    
+                    {{-- Video Preview --}}
+                    <div id="videoPreview" class="mt-2" style="display: none;">
+                        <video id="previewVideo" controls class="img-thumbnail" style="max-height: 150px;">
+                            Your browser does not support the video tag.
+                        </video>
+                        <button type="button" class="btn btn-sm btn-danger mt-2" onclick="removeVideo()">
+                            <i class="fa fa-trash"></i> Remove Video
+                        </button>
+                    </div>
+                    
+                    <span class="text-danger" id="error_video_file"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="cert_link" class="form-label">Cert URL</label>
+                    <input type="text" name="cert_link" id="cert_link" class="form-control">
+                    <span class="text-danger" id="error_cert_link"></span>
+                </div>
+            </div>
+        </div>
+        {{-- <div class="card mb-4">
+            <div class="card-header"><strong>Media & Files</strong></div>
+            <div class="card-body row g-3">
+                @foreach ($fileFields as $f)
                     @php list($name, $label, $type) = $f @endphp
                     <div class="col-md-4">
                         <label for="{{ $name }}" class="form-label">{{ $label }}</label>
-                        <input type="{{ $type }}" name="{{ $name }}" id="{{ $name }}" class="form-control" value="{{ old($name) }}">
+                        <input type="{{ $type }}" name="{{ $name }}" id="{{ $name }}" class="form-control">
                         <span class="text-danger" id="error_{{ $name }}"></span>
                     </div>
                 @endforeach
             </div>
-        </div>
+        </div> --}}
 
         <div class="mt-3">
             <button type="submit" class="btn btn-primary">Save</button>
@@ -182,6 +227,43 @@
 
 {{-- AJAX Script --}}
 <script>
+
+    // Image Preview Function
+    document.getElementById('image_file').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Video Preview Function
+    document.getElementById('video_file').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const url = URL.createObjectURL(file);
+            document.getElementById('previewVideo').src = url;
+            document.getElementById('videoPreview').style.display = 'block';
+        }
+    });
+
+    // Remove Image Function
+    function removeImage() {
+        document.getElementById('image_file').value = '';
+        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('previewImage').src = '#';
+    }
+
+    // Remove Video Function
+    function removeVideo() {
+        document.getElementById('video_file').value = '';
+        document.getElementById('videoPreview').style.display = 'none';
+        document.getElementById('previewVideo').src = '';
+    }
     $(function(){
         function clearErrors() {
             $('.text-danger').text('');
@@ -196,10 +278,16 @@
         $('#createForm').submit(function(e){
             e.preventDefault();
             clearErrors();
+            
+            // Create FormData object to handle file uploads
+            var formData = new FormData(this);
+            
             $.ajax({
                 url: $(this).attr('action'),
                 method: 'POST',
-                data: $(this).serialize(),
+                data: formData,
+                processData: false,
+                contentType: false,
                 success: function(res) {
                     toastr.success(res.message);
                     window.location.href = '{{ route('diamond-master.index') }}';

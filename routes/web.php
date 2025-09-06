@@ -51,6 +51,7 @@ use App\Http\Controllers\Jewellery\ShopTaxRateController;
 use App\Http\Controllers\Jewellery\CollectionController;
 use App\Http\Controllers\ProductImportController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Api\PayPalController;
 
 Route::get('/import-products', [ProductImportController::class, 'showForm'])->name('products.import.form');
 Route::post('/import-products', [ProductImportController::class, 'import'])->name('products.import');
@@ -72,6 +73,8 @@ Route::get('/admin/forgetPassword', [AuthController::class, 'forgetPasswordView'
 Route::post('/password/email', [AuthController::class, 'sendResetLink'])->name('sendResetLink');
 Route::get('password/reset/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
 Route::post('/password/reset', [AuthController::class, 'forgetPassword']);
+Route::get('/paypal/capture', [PayPalController::class, 'captureOrder'])->name('paypal.capture');
+Route::get('/paypal/cancel', [PayPalController::class, 'cancel'])->name('paypal.cancel');
 
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', function () {

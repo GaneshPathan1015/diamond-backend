@@ -23,6 +23,8 @@ class Order extends Model
         'payment_id',
         'payment_status',
         'order_status',
+        'paypal_order_id',
+        'payer_email',
         'delivery_date',
         'product_type',
         'certificate_number',
@@ -57,15 +59,15 @@ class Order extends Model
         };
     }
 
-    public function getProductTypeLabelAttribute(): string
-    {
-        return match($this->product_type) {
-            'diamond' => 'Diamond',
-            'jewelry' => 'Jewelry',
-            'mixed' => 'Mixed',
-            default => ucfirst($this->product_type),
-        };
-    }
+    // public function getProductTypeLabelAttribute(): string
+    // {
+    //     return match($this->product_type) {
+    //         'diamond' => 'Diamond',
+    //         'jewelry' => 'Jewelry',
+    //         'mixed' => 'Mixed',
+    //         default => ucfirst($this->product_type),
+    //     };
+    // }
 
     public function getPaymentModeLabelAttribute(): string
     {
