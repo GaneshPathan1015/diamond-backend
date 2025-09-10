@@ -1,326 +1,964 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice - {{ $order->order_id }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <style>
-        body { font-family: Arial, sans-serif; }
-        .invoice-container { display: flex; gap: 1.5rem; max-width: 1000px; margin: 0 auto; padding: 1.25rem; }
-        .invoice-left { flex: 0 0 65%; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1.25rem; background: #fff; }
-        .invoice-right { flex: 0 0 30%; display: flex; flex-direction: column; gap: 1rem; }
-        .card-header-plain { background-color: #f8f9fa; font-weight: 600; }
-        .invoice-table th, .invoice-table td { border: 1px solid #dee2e6; padding: 0.75rem; }
-        .invoice-table th { background-color: #f1f1f1; font-weight: 600; }
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
-        .badge { padding: 0.35em 0.65em; border-radius: 0.25rem; }
-        .bg-secondary { background-color: #6c757d; }
-        .bg-primary { background-color: #0d6efd; }
-        .bg-info { background-color: #0dcaf0; }
-        .bg-success { background-color: #198754; }
-        .bg-danger { background-color: #dc3545; }
-        .bg-warning { background-color: #ffc107; }
-        .text-muted { color: #6c757d; }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --primary: #5a67d8;
+            --primary-dark: #4c51bf;
+            --secondary: #718096;
+            --success: #38a169;
+            --danger: #e53e3e;
+            --warning: #d69e2e;
+            --info: #3182ce;
+            --light: #f7fafc;
+            --dark: #2d3748;
+            --sidebar-bg: #f8fafc;
+            --border: #e2e8f0;
+            --header-bg: #4c51bf;
+            --table-header: #5a67d8;
+            --accent: #6b46c1;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .invoice-wrapper {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+        }
+        
+        .invoice-main {
+            flex: 1;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        .invoice-sidebar {
+            width: 350px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        .invoice-header {
+            background: linear-gradient(120deg, var(--header-bg), var(--accent));
+            color: white;
+            padding: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-pattern {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            opacity: 0.05;
+        }
+        
+        /* .company-info {
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        } */
+        
+        /* .company-logo {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .company-logo i {
+            font-size: 40px;
+            color: white;
+        } */
+        
+        .company-text h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .company-text p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .invoice-title {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* .invoice-title h1 {
+            font-size: 36px;
+            margin-bottom: 5px;
+            font-weight: 800;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        } */
+        
+        .invoice-title p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .invoice-body {
+            padding: 0px;
+        }
+        
+        .info-sections {
+            display: inline;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+        
+        .info-card {
+            background: var(--light);
+            border-radius: 0px;
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+        }
+        
+        .info-card h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-card h3 i {
+            font-size: 20px;
+        }
+        
+        .info-card p {
+            margin-bottom: 12px;
+            display: flex;
+        }
+        
+        .info-card strong {
+            min-width: 120px;
+            display: inline-block;
+            color: var(--dark);
+        }
+        
+        .products-section {
+            margin-bottom: 35px;
+        }
+        
+        .section-title {
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            color: white;
+            padding: 5px 5px;
+            border-radius: 0px 0px 0 0;
+            margin-bottom: 0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+        
+        .section-title i {
+            font-size: 24px;
+        }
+        
+        .table-responsive {
+            border-radius: 0 0 12px 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            border-top: none;
+        }
+        
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .invoice-table th {
+            background-color: var(--table-header);
+            color: white;
+            padding: 0px 5px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        
+        .invoice-table td {
+            padding: 16px 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .invoice-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .invoice-table tr:nth-child(even) {
+            background-color: #f9fafe;
+        }
+        
+        .invoice-table tr:hover {
+            background-color: #f1f5ff;
+        }
+        
+        .text-end {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+      .summary-section {
+          background: var(--light);
+          border-radius: 0px;
+          padding: 15px;
+          margin-top: 6px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+          border: 1px solid var(--border);
+      }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+        
+        .grand-total {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary);
+            border-bottom: none;
+            border-top: 2px solid var(--primary);
+            padding-top: 11px;
+            margin-top: 5px;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar-header {
+            background: linear-gradient(120deg, var(--primary), var(--accent));
+            color: white;
+            padding: 5px;
+            text-align: center;
+        }
+        
+        .sidebar-header h3 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-header p {
+            opacity: 0.9;
+        }
+        
+        .sidebar-content {
+            padding: 25px;
+        }
+        
+        .action-card {
+            background: var(--light);
+            border-radius: 0px;
+            padding: 5px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+        }
+        
+        .action-card:last-child {
+            margin-bottom: 0;
+        }
+        
+        .action-card h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .action-card h3 i {
+            font-size: 20px;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 15px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+        }
+        
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.1);
+        }
+        
+        .btn {
+            padding: 16px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            width: 100%;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(90, 103, 216, 0.25);
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(90, 103, 216, 0.3);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+            box-shadow: 0 4px 12px rgba(56, 161, 105, 0.25);
+        }
+        
+        .btn-success:hover {
+            background: #2f855a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(56, 161, 105, 0.3);
+        }
+        
+        .status-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .badge {
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .bg-secondary { background-color: var(--secondary); color: white; }
+        .bg-primary { background-color: var(--primary); color: white; }
+        .bg-success { background-color: var(--success); color: white; }
+        .bg-danger { background-color: var(--danger); color: white; }
+        .bg-warning { background-color: var(--warning); color: white; }
+        .bg-info { background-color: var(--info); color: white; }
+        
+        #statusMessage, #actionMessage {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Footer */
+        .invoice-footer {
+            background: var(--light);
+            padding: 25px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            color: var(--secondary);
+            font-size: 14px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .invoice-wrapper {
+                flex-direction: column;
+            }
+            
+            .invoice-sidebar {
+                width: 100%;
+                margin-top: 25px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .invoice-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .company-info {
+                margin-bottom: 25px;
+                justify-content: center;
+            }
+            
+            .invoice-title {
+                text-align: center;
+            }
+            
+            .info-sections {
+                grid-template-columns: 1fr;
+            }
+            
+            .invoice-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .invoice-wrapper {
+                flex-direction: column;
+            }
+            
+            .invoice-sidebar {
+                display: none;
+            }
+            
+            .invoice-main, .invoice-sidebar {
+                box-shadow: none;
+            }
+        }
+    </style>
 </head>
 <body>
-
 @php
-    // Process item details
-    $items = json_decode($order->item_details, true);
-    
-    // Prepare items with names
+    $itemDetails = json_decode($order->item_details, true);
     $processedItems = [];
+    $totalCalculated = 0;
     
-    if (isset($items['diamond'])) {
-        foreach ($items['diamond'] as $diamond) {
-            $id = $diamond['id'] ?? null;
+    // Handle different JSON structures
+    if (isset($itemDetails['diamond'])) {
+        foreach ($itemDetails['diamond'] as $diamond) {
+            $price = $diamond['price'] ?? 0;
             $processedItems[] = [
-                'id' => $id,
-                'name' => $diamondNames[$id] ?? 'Diamond',
                 'type' => 'diamond',
+                'id' => $diamond['id'] ?? null,
+                'name' => $diamond['diamond_name'] ?? $diamond['name'] ?? 'Diamond',
                 'quantity' => $diamond['quantity'] ?? 1,
-                'price' => $diamond['price'] ?? 0,
-                'certificate_number' => $diamond['certificate_number'] ?? null,
+                'price' => $price,
+                'certificate_number' => $diamond['certificate_number'] ?? $diamond['certificate_no'] ?? null
             ];
+            $totalCalculated += $price * ($diamond['quantity'] ?? 1);
         }
     }
     
-    if (isset($items['jewelry'])) {
-        foreach ($items['jewelry'] as $jewelry) {
-            $id = $jewelry['id'] ?? null;
+    if (isset($itemDetails['jewelry'])) {
+        foreach ($itemDetails['jewelry'] as $jewelry) {
+            $price = $jewelry['price'] ?? 0;
             $processedItems[] = [
-                'id' => $id,
-                'name' => $jewelryNames[$id] ?? 'Jewelry',
                 'type' => 'jewelry',
+                'id' => $jewelry['id'] ?? null,
+                'name' => $jewelry['jewelry_name'] ?? $jewelry['name'] ?? 'Jewelry',
                 'quantity' => $jewelry['quantity'] ?? 1,
-                'price' => $jewelry['price'] ?? 0,
-                'metal_type' => $jewelry['metal_type'] ?? null,
-                'metal_color' => $jewelry['metal_color'] ?? null,
-                'metal_purity' => $jewelry['metal_purity'] ?? null,
-                'size' => $jewelry['size'] ?? null,
+                'price' => $price,
+                'metal_type' => $jewelry['metal_type'] ?? $jewelry['metal'] ?? null,
+                'metal_color' => $jewelry['metal_color'] ?? $jewelry['color'] ?? null,
+                'metal_purity' => $jewelry['metal_purity'] ?? $jewelry['purity'] ?? null,
+                'size' => $jewelry['size'] ?? $jewelry['ring_size'] ?? null
             ];
+            $totalCalculated += $price * ($jewelry['quantity'] ?? 1);
         }
+    }
+    
+    // Handle combo items specifically
+    if (isset($itemDetails['combo'])) {
+        foreach ($itemDetails['combo'] as $combo) {
+            $price = $combo['price'] ?? 0;
+            $processedItems[] = [
+                'type' => 'combo',
+                'id' => $combo['id'] ?? null,
+                'name' => $combo['name'] ?? 'Combo Package',
+                'quantity' => $combo['quantity'] ?? 1,
+                'price' => $price,
+                'size' => $combo['size'] ?? null,
+            ];
+            $totalCalculated += $price * ($combo['quantity'] ?? 1);
+        }
+    }
+    
+    // Handle items array structure (for both single products and combo)
+    if (isset($itemDetails['items'])) {
+        foreach ($itemDetails['items'] as $item) {
+            $productType = $item['productType'] ?? 'jewelry';
+            
+            if ($productType === 'combo') {
+                // Calculate combo price from ring and diamond
+                $ringPrice = $item['ring']['price'] ?? 0;
+                $diamondPrice = $item['diamond']['price'] ?? 0;
+                $comboPrice = $ringPrice + $diamondPrice;
+                
+                $processedItems[] = [
+                    'type' => 'combo',
+                    'id' => $item['ring']['id'] ?? null,
+                    'name' => $item['ring']['name'] ?? 'Combo Package',
+                    'quantity' => $item['itemQuantity'] ?? 1,
+                    'price' => $comboPrice,
+                    'size' => $item['size'] ?? null,
+                    'ring_price' => $ringPrice,
+                    'diamond_price' => $diamondPrice,
+                    'diamond_certificate' => $item['diamond']['certificate_number'] ?? null,
+                    'metal_type' => $item['ring']['metal_color']['name'] ?? null
+                ];
+                $totalCalculated += $comboPrice * ($item['itemQuantity'] ?? 1);
+            } else {
+                // Handle single products (jewelry or diamond)
+                if (isset($item['ring'])) {
+                    // Single jewelry product
+                    $price = $item['ring']['price'] ?? 0;
+                    $processedItems[] = [
+                        'type' => 'jewelry',
+                        'id' => $item['ring']['id'] ?? null,
+                        'name' => $item['ring']['name'] ?? 'Jewelry',
+                        'quantity' => $item['itemQuantity'] ?? 1,
+                        'price' => $price,
+                        'metal_type' => $item['ring']['metal_color']['name'] ?? null,
+                        'size' => $item['size'] ?? null
+                    ];
+                    $totalCalculated += $price * ($item['itemQuantity'] ?? 1);
+                } elseif (isset($item['diamond'])) {
+                    // Single diamond product
+                    $price = $item['diamond']['price'] ?? 0;
+                    $diamondName = isset($item['diamond']['shape']['name']) ? 
+                                  $item['diamond']['shape']['name'] . ' Diamond' : 'Diamond';
+                                  
+                    $processedItems[] = [
+                        'type' => 'diamond',
+                        'id' => $item['diamond']['diamondid'] ?? null,
+                        'name' => $diamondName,
+                        'quantity' => $item['itemQuantity'] ?? 1,
+                        'price' => $price,
+                        'certificate_number' => $item['diamond']['certificate_number'] ?? null,
+                        'carat_weight' => $item['diamond']['carat_weight'] ?? null,
+                        'color' => $item['diamond']['color']['name'] ?? null,
+                        'clarity' => $item['diamond']['clarity']['name'] ?? null
+                    ];
+                    $totalCalculated += $price * ($item['itemQuantity'] ?? 1);
+                } elseif (isset($item['productType'])) {
+                    // Fallback for other product types
+                    $price = $item['price'] ?? 0;
+                    $processedItems[] = [
+                        'type' => $item['productType'],
+                        'id' => $item['id'] ?? null,
+                        'name' => $item['name'] ?? ucfirst($item['productType']),
+                        'quantity' => $item['itemQuantity'] ?? 1,
+                        'price' => $price,
+                        'size' => $item['size'] ?? null
+                    ];
+                    $totalCalculated += $price * ($item['itemQuantity'] ?? 1);
+                }
+            }
+        }
+    }
+    
+    // If no items were processed but total price exists, create a generic item
+    if (empty($processedItems)) {
+        $processedItems[] = [
+            'type' => 'unknown',
+            'id' => null,
+            'name' => 'Product',
+            'quantity' => 1,
+            'price' => $order->total_price,
+            'certificate_number' => null
+        ];
+        $totalCalculated = $order->total_price;
     }
     
     // Separate items by type
     $diamondItems = array_filter($processedItems, fn($item) => $item['type'] === 'diamond');
     $jewelryItems = array_filter($processedItems, fn($item) => $item['type'] === 'jewelry');
+    $comboItems = array_filter($processedItems, fn($item) => $item['type'] === 'combo');
 @endphp
 
-  
-  <div class="invoice-container">
-    <div class="invoice-left">
-      <div class="mb-4 text-center">
-        <h2 class="fw-bold">INVOICE</h2>
-        <p><strong>Order ID:</strong> {{ $order->order_id }}</p>
-        <p><strong>Date:</strong> {{ $order->created_at->format('M d, Y') }}</p>
-      </div>
-
-      <div class="mb-4">
-        <h5 class="fw-semibold">Customer Information</h5>
-        <p><strong>Name:</strong> {{ $order->user_name }}</p>
-        <p><strong>Email:</strong> {{ $order->user->email ?? ($order->address['email'] ?? '') }}</p>
-        <p><strong>Contact:</strong> {{ $order->contact_number }}</p>
-        <p><strong>Address:</strong> {{ $order->formatted_address }}</p>
-      </div>
-
-      @if(count($diamondItems) > 0)
-        <div class="mb-4">
-            <h5 class="fw-semibold text-primary">💎 Diamond Details</h5>
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-primary">
-                        <tr>
-                            <th>Name</th>
-                            <th>Quantity</th>
-                            <th>Price (₹)</th>
-                            <th>Certificate</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($diamondItems as $item)
-                        <tr>
-                            <td>{{ $item['name'] }}</td>
-                            <td>{{ $item['quantity'] }}</td>
-                            <td>₹{{ number_format($item['price'], 2) }}</td>
-                            <td>{{ $item['certificate_number'] ?? '-' }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+<div class="invoice-wrapper">
+    <div class="invoice-main">
+        <div class="invoice-header">
+            <div class="header-pattern"></div>
+            <div class="invoice-title">
+                <p>Order #{{ $order->order_id }} | Date: {{ $order->created_at->format('M d, Y') }}</p>
             </div>
         </div>
-        @endif
+        
+        <div class="invoice-body">
+            <div class="info-sections">
+                <div class="info-card">
+                    <h3><i class="fas fa-user"></i> Customer Information</h3>
+                    <p><strong>Name:</strong> {{ $order->user_name }}</p>
+                    <p><strong>Email:</strong> {{ $order->user->email ?? ($order->address['email'] ?? 'N/A') }}</p>
+                    <p><strong>Contact:</strong> {{ $order->contact_number }}</p>
+                </div>
+                
+                <div class="info-card">
+                    <h3><i class="fas fa-truck"></i> Shipping Address</h3>
+                    <p>{{ $order->formatted_address }}</p>
+                </div>
+                
+                <div class="info-card">
+                    <h3><i class="fas fa-info-circle"></i> Order Information</h3>
+                    <p><strong>Status:</strong> 
+                        <span class="badge bg-{{ 
+                            $order->order_status === 'pending' ? 'secondary' : 
+                            ($order->order_status === 'confirmed' ? 'primary' : 
+                            ($order->order_status === 'shipped' ? 'info' : 
+                            ($order->order_status === 'delivered' ? 'success' : 
+                            ($order->order_status === 'returned' ? 'warning' : 'danger'))))
+                        }}">
+                            {{ ucfirst($order->order_status) }}
+                        </span>
+                    </p>
+                    <p><strong>Payment Method:</strong> {{ ucfirst($order->payment_mode) }}</p>
+                    <p><strong>Payment Status:</strong> {{ ucfirst($order->payment_status) }}</p>
+                </div>
+            </div>
+            
+            @if(count($diamondItems) > 0)
+                <div class="products-section">
+                    <h3 class="section-title"><i class="fas fa-gem"></i> Diamond Details</h3>
+                    <div class="table-responsive">
+                        <table class="invoice-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Quantity</th>
+                                    <th class="text-end">Price</th>
+                                    <th>Certificate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($diamondItems as $item)
+                                <tr>
+                                    <td>{{ $item['name'] }}</td>
+                                    <td>{{ $item['quantity'] }}</td>
+                                    <td class="text-end">₹{{ number_format($item['price'], 2) }}</td>
+                                    <td>{{ $item['certificate_number'] ?? '-' }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
 
-        @if(count($jewelryItems) > 0)
-        <div class="mb-4">
-            <h5 class="fw-semibold text-warning">💍 Jewelry Details</h5>
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-warning">
-                        <tr>
-                            <th>Name</th>
-                            <th>Quantity</th>
-                            <th>Price (₹)</th>
-                            <th>Metal</th>
-                            <th>Size</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($jewelryItems as $item)
-                        <tr>
-                            <td>{{ $item['name'] }}</td>
-                            <td>{{ $item['quantity'] }}</td>
-                            <td>₹{{ number_format($item['price'], 2) }}</td>
-                            <td>
-                                @if($item['metal_type'])
-                                    {{ $item['metal_type'] }} 
-                                    ({{ $item['metal_color'] }}, {{ $item['metal_purity'] }})
-                                @else
-                                    -
-                                @endif
-                            </td>
-                            <td>{{ $item['size'] ?? '-' }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            @if(count($jewelryItems) > 0)
+                <div class="products-section">
+                    <h3 class="section-title"><i class="fas fa-ring"></i> Jewelry Details</h3>
+                    <div class="table-responsive">
+                        <table class="invoice-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Quantity</th>
+                                    <th class="text-end">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($jewelryItems as $item)
+                                <tr>
+                                    <td>{{ $item['name'] }}</td>
+                                    <td>{{ $item['quantity'] }}</td>
+                                    <td class="text-end">₹{{ number_format($item['price'], 2) }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
+            @if(count($comboItems) > 0)
+                <div class="products-section">
+                    <h3 class="section-title"><i class="fas fa-gift"></i> Combo Details</h3>
+                    <div class="table-responsive">
+                        <table class="invoice-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Quantity</th>
+                                    <th class="text-end">Jewelry</th>
+                                    <th class="text-end">Diamond</th>
+                                    <th class="text-end">Total</th>
+                                    <th>Size</th>
+                                    <th>Metal</th>
+                                    <th>Certificate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($comboItems as $item)
+                                <tr>
+                                    <td>{{ $item['name'] }}</td>
+                                    <td>{{ $item['quantity'] }}</td>
+                                    <td class="text-end">₹{{ number_format($item['ring_price'] ?? 0, 2) }}</td>
+                                    <td class="text-end">₹{{ number_format($item['diamond_price'] ?? 0, 2) }}</td>
+                                    <td class="text-end">₹{{ number_format($item['price'], 2) }}</td>
+                                    <td>{{ $item['size'] ?? '-' }}</td>
+                                    <td>{{ $item['metal_type'] ?? '-' }}</td>
+                                    <td>{{ $item['diamond_certificate'] ?? '-' }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
+            <div class="products-section">
+                <h3 class="section-title"><i class="fas fa-receipt"></i> Order Summary</h3>
+                <div class="table-responsive">
+                    <table class="invoice-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Type</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Price</th>
+                                <th class="text-end">Sub Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if(count($processedItems) > 0)
+                                @foreach($processedItems as $item)
+                                <tr>
+                                    <td>{{ $item['name'] }}</td>
+                                    <td>{{ ucfirst($item['type']) }}</td>
+                                    <td class="text-center">{{ $item['quantity'] }}</td>
+                                    <td class="text-end">₹{{ number_format($item['price'], 2) }}</td>
+                                    <td class="text-end">₹{{ number_format($item['price'] * $item['quantity'], 2) }}</td>
+                                </tr>
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="5" class="text-center">No items found</td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="summary-section">
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span>₹{{ number_format($order->total_price, 2) }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping:</span>
+                    <span>₹{{ number_format($order->shipping_cost, 2) }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Discount:</span>
+                    <span class="text-danger">-₹{{ number_format($order->discount, 2) }}</span>
+                </div>
+                <div class="summary-row grand-total">
+                    <span>Grand Total:</span>
+                    <span>₹{{ number_format($order->total_price + $order->shipping_cost - $order->discount, 2) }}</span>
+                </div>
             </div>
         </div>
-        @endif
-
-        <h5 class="fw-semibold">Order Summary</h5>
-        <table class="invoice-table" style="width:100%; margin-bottom:1rem;">
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Type</th>
-                    <th class="text-center">Qty</th>
-                    <th class="text-end">Price</th>
-                    <th class="text-end">Sub Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($processedItems as $item)
-                <tr>
-                    <td>{{ $item['name'] }}</td>
-                    <td>{{ ucfirst($item['type']) }}</td>
-                    <td class="text-center">{{ $item['quantity'] }}</td>
-                    <td class="text-end">₹{{ number_format($item['price'], 2) }}</td>
-                    <td class="text-end">
-                        ₹{{ number_format($item['price'] * $item['quantity'], 2) }}
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-
-      <div class="mb-4">
-        <div class="summary-row">
-          <span>Subtotal:</span>
-          <span>₹{{ number_format($order->total_price, 2) }}</span>
+        
+        <div class="invoice-footer">
+            <p>Thank you for your business! | The Carat Casa © {{ date('Y') }} | <a href="https://thecaratcasa.com/">www.thecaratcasa.com</a></p>
         </div>
-        <div class="summary-row">
-          <span>Shipping:</span>
-          <span>₹{{ number_format($order->shipping_cost, 2) }}</span>
-        </div>
-        <div class="summary-row">
-          <span>Discount:</span>
-          <span class="text-danger">-₹{{ number_format($order->discount, 2) }}</span>
-        </div>
-        <div class="summary-row fw-semibold border-top pt-2">
-          <span>Grand Total:</span>
-          <span>₹{{ number_format($order->total_price + $order->shipping_cost - $order->discount, 2) }}</span>
-        </div>
-      </div>
     </div>
-
-    <div class="invoice-right">
-      <div class="card">
-        <div class="card-header card-header-plain">Order Status</div>
-        <div class="card-body">
-          <select id="statusSelect" class="form-select mb-2" {{ in_array($order->order_status, ['cancelled', 'returned']) ? 'disabled' : '' }}>
-            <option value="" disabled selected>Select status</option>
-            <option value="confirmed" {{ $order->order_status === 'pending' ? '' : 'disabled' }}>Confirmed</option>
-            <option value="shipped" {{ $order->order_status === 'confirmed' ? '' : 'disabled' }}>Shipped</option>
-            <option value="delivered" {{ $order->order_status === 'shipped' ? '' : 'disabled' }}>Delivered</option>
-            <option value="returned" {{ $order->order_status === 'delivered' ? '' : 'disabled' }}>Returned</option>
-            <option value="cancelled">Cancel</option>
-          </select>
-          
-          <div class="mb-2">
-            <strong>Current:</strong>
-            <span class="badge bg-{{ 
-                $order->order_status === 'pending' ? 'secondary' : 
-                ($order->order_status === 'confirmed' ? 'primary' : 
-                ($order->order_status === 'shipped' ? 'info' : 
-                ($order->order_status === 'delivered' ? 'success' : 
-                ($order->order_status === 'returned' ? 'warning' : 'danger'))))
-            }}">
-              {{ $order->status_label }}
-            </span>
-          </div>
-          
-          <button id="updateStatusBtn" class="btn btn-primary" {{ in_array($order->order_status, ['cancelled', 'returned']) ? 'disabled' : '' }}>
-            Update Status
-          </button>
-          <div id="statusMessage" class="mt-2" style="display: none;"></div>
+    
+    <div class="invoice-sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-cog"></i> Order Management</h3>
+            <p>Manage order status and invoice actions</p>
         </div>
-      </div>
+        
+        <div class="sidebar-content">
+            <div class="action-card">
+                <h3><i class="fas fa-tasks"></i> Order Status</h3>
+                <select id="statusSelect" class="form-select" {{ in_array($order->order_status, ['cancelled', 'returned']) ? 'disabled' : '' }}>
+                    <option value="" disabled selected>Select status</option>
+                    <option value="confirmed" {{ $order->order_status === 'pending' ? '' : 'disabled' }}>Confirmed</option>
+                    <option value="shipped" {{ $order->order_status === 'confirmed' ? '' : 'disabled' }}>Shipped</option>
+                    <option value="delivered" {{ $order->order_status === 'shipped' ? '' : 'disabled' }}>Delivered</option>
+                    <option value="returned" {{ $order->order_status === 'delivered' ? '' : 'disabled' }}>Returned</option>
+                    <option value="cancelled">Cancel</option>
+                </select>
+                
+                <div class="status-display">
+                    <strong>Current Status:</strong>
+                    <span class="badge bg-{{ 
+                        $order->order_status === 'pending' ? 'secondary' : 
+                        ($order->order_status === 'confirmed' ? 'primary' : 
+                        ($order->order_status === 'shipped' ? 'info' : 
+                        ($order->order_status === 'delivered' ? 'success' : 
+                        ($order->order_status === 'returned' ? 'warning' : 'danger'))))
+                    }}">
+                        {{ ucfirst($order->order_status) }}
+                    </span>
+                </div>
+                
+                <button id="updateStatusBtn" class="btn btn-sm btn-primary" {{ in_array($order->order_status, ['cancelled', 'returned']) ? 'disabled' : '' }}>
+                    <i class="fas fa-sync-alt"></i> Update Status
+                </button>
+                <div id="statusMessage" style="display: none;"></div>
+            </div>
 
-      <div class="card">
-        <div class="card-header card-header-plain">Invoice Actions</div>
-        <div class="card-body">
-          <select id="actionSelect" class="form-select mb-2">
-            <option selected disabled>Select Action</option>
-            <option value="download">Download Invoice</option>
-            <option value="send_user">Send to Customer</option>
-            <option value="send_admin">Send to Admin</option>
-          </select>
-          <button id="performActionBtn" class="btn btn-success">
-            Execute
-          </button>
-          <div id="actionMessage" class="mt-2" style="display: none;"></div>
+            <div class="action-card">
+                <h3><i class="fas fa-file-invoice"></i> Invoice Actions</h3>
+                <select id="actionSelect" class="form-select">
+                    <option selected disabled>Select Action</option>
+                    <option value="download">Download Invoice</option>
+                    <option value="send_user">Send to Customer</option>
+                    <option value="send_admin">Send to Admin</option>
+                </select>
+                <button id="performActionBtn" class="btn btn-success">
+                    <i class="fas fa-paper-plane"></i> Execute Action
+                </button>
+                <div id="actionMessage" style="display: none;"></div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
+</div>
 
-  <script>
+<script>
     $(function(){
-      const orderId = {{ $order->id }};
-      const currentStatus = "{{ $order->order_status }}";
-      const downloadUrl  = '{{ route("orders.invoice.download", $order->id) }}';
-      const sendUrlBase  = '{{ route("orders.invoice.send", $order->id) }}';
-      const statusUrl    = '{{ route("orders.changeStatus", $order->id) }}';
+        const orderId = {{ $order->id }};
+        const currentStatus = "{{ $order->order_status }}";
+        const downloadUrl  = '{{ route("orders.invoice.download", $order->id) }}';
+        const sendUrlBase  = '{{ route("orders.invoice.send", $order->id) }}';
+        const statusUrl    = '{{ route("orders.changeStatus", $order->id) }}';
 
-      $.ajaxSetup({
-        headers: {
-          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-          'Accept': 'application/json'
-        }
-      });
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            }
+        });
 
-      function showMessage(elementId, message, type) {
-        const element = $('#' + elementId);
-        element.removeClass().addClass(type === 'success' ? 'alert-success' : 'alert-danger')
-               .text(message).show().delay(3000).fadeOut();
-      }
+        function showMessage(elementId, message, type) {
+            const element = $('#' + elementId);
+            element.removeClass().addClass(type === 'success' ? 'alert-success' : 'alert-danger')
+                   .text(message).show().delay(3000).fadeOut();
+        }
 
-      $('#updateStatusBtn').on('click', function(){
-          const newStatus = $('#statusSelect').val();
-          const btn = $(this);
-          
-          btn.prop('disabled', true).html('Updating...');
-          
-          $.ajax({
-              url: statusUrl,
-              method: 'PATCH',
-              data: { 
-                  order_status: newStatus,
-                  _token: "{{ csrf_token() }}"
-              },
-              success: function() {
-                  showMessage('statusMessage', 'Status updated!', 'success');
-                  setTimeout(() => location.reload(), 1500);
-              },
-              error: function(xhr) {
-                  btn.prop('disabled', false).text('Update Status');
-                  showMessage('statusMessage', xhr.responseJSON?.message || 'Error updating status', 'danger');
-              }
-          });
-      });
+        $('#updateStatusBtn').on('click', function(){
+            const newStatus = $('#statusSelect').val();
+            const btn = $(this);
+            
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
+            
+            $.ajax({
+                url: statusUrl,
+                method: 'PATCH',
+                data: { 
+                    order_status: newStatus,
+                    _token: "{{ csrf_token() }}"
+                },
+                success: function() {
+                    showMessage('statusMessage', 'Status updated successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false).html('<i class="fas fa-sync-alt"></i> Update Status');
+                    showMessage('statusMessage', xhr.responseJSON?.message || 'Error updating status', 'danger');
+                }
+            });
+        });
 
-      $('#performActionBtn').on('click', function(){
-        const action = $('#actionSelect').val();
-        const btn = $(this);
-        
-        if (!action) {
-          showMessage('actionMessage', 'Select an action first', 'danger');
-          return;
-        }
-        
-        btn.prop('disabled', true).html('Processing...');
-        
-        if (action === 'download') {
-          window.open(downloadUrl, '_blank');
-          showMessage('actionMessage', 'Download started!', 'success');
-          btn.prop('disabled', false).text('Execute');
-        }
-        else {
-          const to = action === 'send_user' ? 'user' : 'admin';
-          
-          $.get(sendUrlBase + '?to=' + to, function(res) {
-            showMessage('actionMessage', res.message || 'Invoice sent!', 'success');
-            btn.prop('disabled', false).text('Execute');
-          }).fail(function(xhr) {
-            showMessage('actionMessage', xhr.responseJSON?.message || 'Sending failed', 'danger');
-            btn.prop('disabled', false).text('Execute');
-          });
-        }
-      });
+        $('#performActionBtn').on('click', function(){
+            const action = $('#actionSelect').val();
+            const btn = $(this);
+            
+            if (!action) {
+                showMessage('actionMessage', 'Please select an action first', 'danger');
+                return;
+            }
+            
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+            
+            if (action === 'download') {
+                window.open(downloadUrl, '_blank');
+                showMessage('actionMessage', 'Download started!', 'success');
+                btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> Execute Action');
+            }
+            else {
+                const to = action === 'send_user' ? 'user' : 'admin';
+                
+                $.get(sendUrlBase + '?to=' + to, function(res) {
+                    showMessage('actionMessage', res.message || 'Invoice sent successfully!', 'success');
+                    btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> Execute Action');
+                }).fail(function(xhr) {
+                    showMessage('actionMessage', xhr.responseJSON?.message || 'Sending failed. Please try again.', 'danger');
+                    btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> Execute Action');
+                });
+            }
+        });
     });
-  </script>
+</script>
 </body>
 </html>

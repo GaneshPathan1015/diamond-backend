@@ -24,6 +24,8 @@ class Order extends Model
         'payment_status',
         'paypal_order_id',
         'order_status',
+        'paypal_order_id',
+        'payer_email',
         'delivery_date',
         'product_type',
         'certificate_number',

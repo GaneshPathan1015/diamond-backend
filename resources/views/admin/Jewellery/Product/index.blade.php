@@ -19,8 +19,7 @@
             <th></th> 
             <th>#</th> 
             <th>Name</th> 
-            <th>Category</th>    
-            <th>Images</th>  
+            <th>Category</th>      
             <th>Status</th>      
             <th>Added Date</th>
           </tr>
@@ -72,12 +71,12 @@ $(document).ready(function () {
                 data: 'category_name',
                 name: 'category_name'
             },
-            {
-                data: 'featured_image',
-                name: 'featured_image',
-                orderable: false,
-                searchable: false
-            },
+            // {
+            //     data: 'featured_image',
+            //     name: 'featured_image',
+            //     orderable: false,
+            //     searchable: false
+            // },
             {
                 data: 'products_status',
                 name: 'products_status'
@@ -90,19 +89,19 @@ $(document).ready(function () {
         order: [[1, 'desc']],
         columnDefs: [
             {
-                targets: 4, // Images
+                targets: 3, // Images
                 render: function (data) {
                     return data;
                 }
             },
             {
-                targets: 5, // Status
+                targets: 4, // Status
                 render: function (data) {
                     return data;
                 }
             },
             {
-                targets: 6, // Date
+                targets: 5, // Date
                 render: function (data) {
                     return data ? new Date(data).toLocaleDateString('en-GB', {
                         day: '2-digit',
@@ -141,7 +140,7 @@ $(document).ready(function () {
                   toastr[response.type](response.message);
                   
                   // Reload datatable
-                  $('#productTable').DataTable().ajax.reload(null, false);
+                  $('#productTable').DataTable().ajax.reload(null, false); 
               },
               error: function(xhr) {
                   // Show error toast

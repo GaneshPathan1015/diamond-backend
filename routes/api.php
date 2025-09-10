@@ -87,8 +87,16 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('/add-to-cart', [CartController::class, 'store']);
 Route::get('/user-address/{user_id}', [AddressController::class, 'getAddress']);
 Route::post('/store-addresses', [AddressController::class, 'store']);
-Route::post('/store-order', [OrderController::class, 'store']);
-Route::middleware('auth:sanctum')->get('/get-orders', [OrderController::class, 'index']);
+Route::middleware('auth:sanctum')->group(function () {
+    // Get all orders for authenticated user
+    Route::get('/get-orders', [OrderController::class, 'index']);
+    
+    // Get specific order by ID
+    Route::get('/get-order/{id}', [OrderController::class, 'show']);
+    
+    // Cancel an order
+    Route::post('/cancel-order/{id}', [OrderController::class, 'cancel']);
+});
 
 Route::post('/paypal/create-order', [PayPalController::class, 'createOrder'])->name('paypal.create');
 // Route::get('/paypal/capture', [PayPalController::class, 'captureOrder'])->name('paypal.capture');

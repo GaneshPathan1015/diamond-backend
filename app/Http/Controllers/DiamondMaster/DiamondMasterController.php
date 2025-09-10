@@ -1,5 +1,6 @@
 <?php
 namespace App\Http\Controllers\DiamondMaster;
+
 use App\Models\DiamondCulet;
 use App\Models\DiamondCut;
 use App\Models\DiamondFancyColor;
@@ -17,10 +18,11 @@ use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
 use App\Models\DiamondClarityMaster;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 
 class DiamondMasterController extends Controller
 {
-     public function index()
+    public function index()
     {
         return view('admin.DiamondMaster.master.index', [
             'vendors' => DiamondVendor::pluck('vendor_name', 'vendorid'),
@@ -53,12 +55,12 @@ class DiamondMasterController extends Controller
         ]);
 
         if ($request->filled('price')) {
-            $price = $request->get('price'); // expects [min, max]
+            $price = $request->get('price');
             $query->whereBetween('price', $price);
         }
 
         if ($request->has('carat') && is_array($request->carat) && count($request->carat) === 2) {
-            $carat = array_map('floatval', $request->carat); // expects [min, max]
+            $carat = array_map('floatval', $request->carat);
             $query->whereBetween('carat_weight', $carat);
         }
 
@@ -92,7 +94,6 @@ class DiamondMasterController extends Controller
 
     public function data(Request $request)
     {
-       
         $query = DiamondMaster::with([
             'shape', 'color', 'cut', 'clarity',
             'certificateCompany', 'polish', 'symmetry', 'fluorescence'
@@ -102,14 +103,13 @@ class DiamondMasterController extends Controller
             $query->where('diamond_type', (int) $request->get('active_tab'));
         }
             
-
-         if ($request->filled('price')) {
-            $price = $request->get('price'); // expects [min, max]
+        if ($request->filled('price')) {
+            $price = $request->get('price');
             $query->whereBetween('price', $price);
         }
 
         if ($request->has('carat') && is_array($request->carat) && count($request->carat) === 2) {
-            $carat = array_map('floatval', $request->carat); // expects [min, max]
+            $carat = array_map('floatval', $request->carat);
             $query->whereBetween('carat_weight', $carat);
         }
 
@@ -117,7 +117,6 @@ class DiamondMasterController extends Controller
             $cut = array_map('intval', $request->cut);
             $query->whereBetween('cut', $cut);
         }
-
 
         if ($request->has('color') && is_array($request->color) && count($request->color) === 2) {
             $min = intval($request->color[0]);
@@ -143,53 +142,30 @@ class DiamondMasterController extends Controller
             $query->where('certificate_number', 'like', '%' . $request->get('certificate') . '%');
         }
 
-        if (
-            $request->has('polish') &&
-            is_array($request->polish) &&
-            count($request->polish) === 2 &&
-            is_numeric($request->polish[0]) &&
-            is_numeric($request->polish[1])
-        ) {
+        if ($request->has('polish') && is_array($request->polish) && count($request->polish) === 2 &&
+            is_numeric($request->polish[0]) && is_numeric($request->polish[1])) {
             $start = (int) $request->polish[0];
             $end = (int) $request->polish[1];
-
-            // Reduce last value by 1 but don't go below the start value
             $end = max($end - 1, $start);
-
             $query->whereBetween('polish', [$start, $end]);
         }
 
-        if (
-            $request->has('symmetry') &&
-            is_array($request->symmetry) &&
-            count($request->symmetry) === 2 &&
-            is_numeric($request->symmetry[0]) &&
-            is_numeric($request->symmetry[1])
-        ) {
+        if ($request->has('symmetry') && is_array($request->symmetry) && count($request->symmetry) === 2 &&
+            is_numeric($request->symmetry[0]) && is_numeric($request->symmetry[1])) {
             $start = (int) $request->symmetry[0];
             $end = (int) $request->symmetry[1];
-
-            // Reduce last value by 1 but don't go below the start value
             $end = max($end - 1, $start);
-
             $query->whereBetween('symmetry', [$start, $end]);
         }
       
         if ($request->has('fluorescence') && is_array($request->fluorescence)) {
             $fluorescence = $request->fluorescence;
-            // Reduce the last value by 1 dynamically
-            $fluorescence[1] = max($fluorescence[1] - 1, $fluorescence[0]); 
-            // Ensure the last value doesn't go below the first value
+            $fluorescence[1] = max($fluorescence[1] - 1, $fluorescence[0]);
             $query->whereBetween('fluorescence', $fluorescence);
         }
 
-        if (
-            $request->has('ratio') &&
-            is_array($request->ratio) &&
-            count($request->ratio) === 2 &&
-            is_numeric($request->ratio[0]) &&
-            is_numeric($request->ratio[1])
-        ) {
+        if ($request->has('ratio') && is_array($request->ratio) && count($request->ratio) === 2 &&
+            is_numeric($request->ratio[0]) && is_numeric($request->ratio[1])) {
             $start = (float) $request->ratio[0];
             $end = (float) $request->ratio[1];
 
@@ -199,39 +175,19 @@ class DiamondMasterController extends Controller
                 ->whereRaw('(measurement_l / measurement_w) BETWEEN ? AND ?', [$start, $end]);
         }
 
-        if (
-            $request->has('table') &&
-            is_array($request->table) &&
-            count($request->table) === 2 &&
-            is_numeric($request->table[0]) &&
-            is_numeric($request->table[1])
-        ) {
+        if ($request->has('table') && is_array($request->table) && count($request->table) === 2 &&
+            is_numeric($request->table[0]) && is_numeric($request->table[1])) {
             $start = (int) $request->table[0];
             $end = (int) $request->table[1];
-
             $query->whereBetween('table_diamond', [$start, $end]);
         }
 
-        if (
-            $request->has('depth') &&
-            is_array($request->depth) &&
-            count($request->depth) === 2 &&
-            is_numeric($request->depth[0]) &&
-            is_numeric($request->depth[1])
-        ) {
+        if ($request->has('depth') && is_array($request->depth) && count($request->depth) === 2 &&
+            is_numeric($request->depth[0]) && is_numeric($request->depth[1])) {
             $start = (int) $request->depth[0];
             $end = (int) $request->depth[1];
-
             $query->whereBetween('depth', [$start, $end]);
         }
-
-        // Sorting
-        // if ($request->filled('sort')) {
-        //     $sort = explode(':', $request->get('sort'));
-        //     $column = $sort[0];
-        //     $direction = $sort[1] ?? 'asc';
-        //     $query->orderBy($column, $direction);
-        // }
 
         if ($request->boolean('featured')) {
             $query->where('is_superdeal', 1);
@@ -243,8 +199,7 @@ class DiamondMasterController extends Controller
             if (is_array($checked) && count($checked) > 0) {
                 $query->whereIn('diamondid', $checked);
             } else {
-                // If showOnlyChecked is true but no IDs, return no results
-                $query->whereRaw('0 = 1'); // always false condition
+                $query->whereRaw('0 = 1');
             }
         }
 
@@ -252,7 +207,6 @@ class DiamondMasterController extends Controller
         $diamonds = $query->paginate($perPage);
 
         return response()->json($diamonds);
-
     }
    
     public function create()
@@ -294,9 +248,9 @@ class DiamondMasterController extends Controller
             'price' => 'nullable|numeric|min:0',
             'msrp_price' => 'nullable|numeric|min:0',
             'price_per_carat' => 'nullable|numeric|min:0',
-            'image_link' => 'nullable|url',
+            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'cert_link' => 'nullable|url',
-            'video_link' => 'nullable|url',
+            'video_file' => 'nullable|mimetypes:video/mp4,video/avi,video/mpeg,video/quicktime|max:10240',
             'measurements' => 'nullable|string',
             'depth' => 'nullable|numeric|min:0',
             'vendor_rap_disc' => 'nullable|numeric|min:0',
@@ -320,7 +274,25 @@ class DiamondMasterController extends Controller
             }
             return redirect()->back()->withErrors($validator)->withInput();
         }
+        
         $validatedData = $validator->validated();
+        
+         if ($request->hasFile('image_file')) {
+            $imageFile = $request->file('image_file');
+            $imageName = time() . '_' . $imageFile->getClientOriginalName();
+            $imagePath = $imageFile->storeAs('diamonds/images', $imageName, 'public');
+            $validatedData['image_link'] = $imageName;
+        }
+        
+        // Handle video file upload - store only filename
+        if ($request->hasFile('video_file')) {
+            $videoFile = $request->file('video_file');
+            $videoName = time() . '_' . $videoFile->getClientOriginalName();
+            $videoPath = $videoFile->storeAs('diamonds/videos', $videoName, 'public');
+
+            $validatedData['video_link'] = $videoName;
+        }
+        
         $dimensions = [];
 
         if (!empty($validatedData['measurement_l'])) {
@@ -336,7 +308,6 @@ class DiamondMasterController extends Controller
         if (count($dimensions) > 0) {
             $validatedData['measurements'] = implode(' x ', $dimensions);
         }
-
 
         $validatedData['date_added'] = now();
         $validatedData['added_by'] = auth()->id();
@@ -389,9 +360,9 @@ class DiamondMasterController extends Controller
             'price' => 'nullable|numeric|min:0',
             'msrp_price' => 'nullable|numeric|min:0',
             'price_per_carat' => 'nullable|numeric|min:0',
-            'image_link' => 'nullable|url',
+            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'cert_link' => 'nullable|url',
-            'video_link' => 'nullable|url',
+            'video_file' => 'nullable|mimetypes:video/mp4,video/avi,video/mpeg,video/quicktime|max:10240',
             'measurements' => 'nullable|string',
             'depth' => 'nullable|numeric|min:0',
             'vendor_rap_disc' => 'nullable|numeric|min:0',
@@ -407,12 +378,42 @@ class DiamondMasterController extends Controller
             'status' => 'nullable|in:0,1',
         ];
 
-
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+        
+        $diamond = DiamondMaster::findOrFail($id);
         $validatedData = $validator->validated();
+        
+        // Handle image file upload - store only filename
+        if ($request->hasFile('image_file')) {
+            // Delete old image if exists
+            if ($diamond->image_link) {
+                Storage::disk('public')->delete('diamonds/images/' . $diamond->image_link);
+            }
+            
+            $imageFile = $request->file('image_file');
+            $imageName = time() . '_' . $imageFile->getClientOriginalName();
+            $imagePath = $imageFile->storeAs('diamonds/images', $imageName, 'public');
+            
+            $validatedData['image_link'] = $imageName;
+        }
+        
+        // Handle video file upload - store only filename
+        if ($request->hasFile('video_file')) {
+            // Delete old video if exists
+            if ($diamond->video_link) {
+                Storage::disk('public')->delete('diamonds/videos/' . $diamond->video_link);
+            }
+            
+            $videoFile = $request->file('video_file');
+            $videoName = time() . '_' . $videoFile->getClientOriginalName();
+            $videoPath = $videoFile->storeAs('diamonds/videos', $videoName, 'public');
+
+            $validatedData['video_link'] = $videoName;
+        }
+
         $dimensions = [];
 
         if (!empty($validatedData['measurement_l'])) {
@@ -431,15 +432,26 @@ class DiamondMasterController extends Controller
 
         $validatedData['date_updated'] = now();
         $validatedData['updated_by'] = auth()->id();
-        DiamondMaster::findOrFail($id)->update($validatedData);
-        //return response()->json(['message' => 'Diamond updated successfully.']);
+        $diamond->update($validatedData);
+        
         return response()->json(['success' => true, 'message' => 'Record updated successfully.']);
     }
 
-
     public function destroy($id)
     {
-        DiamondMaster::findOrFail($id)->delete();
+        $diamond = DiamondMaster::findOrFail($id);
+        
+        // Delete associated files
+        if ($diamond->image_link) {
+            Storage::disk('public')->delete('diamonds/images/' . $diamond->image_link);
+        }
+        
+        if ($diamond->video_link) {
+            Storage::disk('public')->delete('diamonds/videos/' . $diamond->video_link);
+        }
+        
+        $diamond->delete();
+        
         return redirect()->route('diamond-master.index')
                          ->with('success','Diamond deleted successfully.');
     }

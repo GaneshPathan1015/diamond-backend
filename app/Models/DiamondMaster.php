@@ -15,6 +15,25 @@ class DiamondMaster extends Model
     protected $primaryKey = 'diamondid';
     public $timestamps = false;
 
+     // Image URL Accessor
+    public function getImageUrlAttribute()
+    {
+        if ($this->image_link) {
+            return asset('storage/diamonds/images/' . $this->image_link);
+        }
+        return null;
+    }
+
+    // Video URL Accessor
+    public function getVideoUrlAttribute()
+    {
+        if ($this->video_link) {
+            return asset('storage/diamonds/videos/' . $this->video_link);
+        }
+        return null;
+    }
+
+
     public function vendor()
     {
         return $this->belongsTo(DiamondVendor::class, 'vendor_id');

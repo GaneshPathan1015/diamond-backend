@@ -73,6 +73,8 @@ Route::get('/admin/forgetPassword', [AuthController::class, 'forgetPasswordView'
 Route::post('/password/email', [AuthController::class, 'sendResetLink'])->name('sendResetLink');
 Route::get('password/reset/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
 Route::post('/password/reset', [AuthController::class, 'forgetPassword']);
+Route::get('/paypal/capture', [PayPalController::class, 'captureOrder'])->name('paypal.capture');
+Route::get('/paypal/cancel', [PayPalController::class, 'cancel'])->name('paypal.cancel');
 
 Route::get('/paypal/capture', [PayPalController::class, 'captureOrder'])->name('paypal.capture');
 Route::get('/paypal/cancel', [PayPalController::class, 'cancel'])->name('paypal.cancel');

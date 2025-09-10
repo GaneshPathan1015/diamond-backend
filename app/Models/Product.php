@@ -14,7 +14,7 @@ class Product extends Model
         'products_id',
         'products_name',
         'products_description',
-        'products_short_description', 
+        'products_short_description',
         'available',
         'products_quantity',
         'products_model',
@@ -27,7 +27,7 @@ class Product extends Model
         'products_price4',
         'products_weight',
         'products_status',
-        'engraving_status',
+        'engraving_status', 
         'products_slug',
         'catelog_no',
         'vendor_id',
@@ -88,19 +88,6 @@ class Product extends Model
         'date_updated',
         'shop_zone_id'
     ];
-
-    public function featured_image()
-    {
-        return $this->hasOne(ProductImage::class, 'products_id')
-            ->where('is_featured', 1);
-    }
-
-    public function gallery_images()
-    {
-        return $this->hasMany(ProductImage::class, 'products_id')
-            ->where('is_featured', 0)
-            ->whereNull('variation_id');
-    }
 
     public function variations()
     {
