@@ -21,6 +21,7 @@ use App\Http\Controllers\DiamondMaster\DiamondMasterController;
 use App\Http\Controllers\Api\PayPalController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CartController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -90,5 +91,14 @@ Route::post('/store-order', [OrderController::class, 'store']);
 Route::middleware('auth:sanctum')->get('/get-orders', [OrderController::class, 'index']);
 
 Route::post('/paypal/create-order', [PayPalController::class, 'createOrder'])->name('paypal.create');
-Route::get('/paypal/capture', [PayPalController::class, 'captureOrder'])->name('paypal.capture');
-Route::get('/paypal/cancel', [PayPalController::class, 'cancel'])->name('paypal.cancel');
+// Route::get('/paypal/capture', [PayPalController::class, 'captureOrder'])->name('paypal.capture');
+// Route::get('/paypal/cancel', [PayPalController::class, 'cancel'])->name('paypal.cancel');
+
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart/add', [CartController::class, 'add']);
+    Route::post('/cart/remove', [CartController::class, 'remove']);
+    Route::post('/cart/update', [CartController::class, 'update']);
+});

@@ -29,7 +29,8 @@ class PaypalService
                 "amount" => [
                     "currency_code" => "USD",
                     "value" => number_format($totalAmount, 2, '.', '')
-                ]
+                ],
+                "reference_id" => $referenceId, // optional: helps track your DB order
             ]]
         ];
 

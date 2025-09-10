@@ -8,11 +8,10 @@ use PayPalCheckoutSdk\Core\SandboxEnvironment;
 use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
 use PayPalCheckoutSdk\Orders\OrdersCaptureRequest;
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 
 class PayPalController extends Controller
 {
-    //
-
     // Helper to get PayPal HTTP client
     private function paypalClient()
     {
@@ -27,6 +26,7 @@ class PayPalController extends Controller
     {
         // Initialize PayPal client
         $client = $this->paypalClient();
+        $pendingOrderId = $request->input('order_id');
 
         // Create order request
         $orderRequest = new OrdersCreateRequest();
@@ -37,12 +37,14 @@ class PayPalController extends Controller
             'purchase_units' => [[
                 'amount' => [
                     'currency_code' => 'USD',
-                    'value' => $request->input('amount', '10.00') // default to 10.00 if not provided
-                ]
+                    'value' => $request->input('amount') // default to 10.00 if not provided
+                ],
+                // Optional: attach reference id to identify order in PayPal
+                'reference_id' => $pendingOrderId,
             ]],
             'application_context' => [
-                'return_url' => route('paypal.capture'), // define this route in web.php
-                'cancel_url' => route('paypal.cancel'),
+                'return_url' => route('paypal.capture', ['order_id' => $pendingOrderId]), // define this route in web.php
+                'cancel_url' => route('paypal.cancel', ['order_id' => $pendingOrderId]),
             ]
         ];
 
@@ -62,81 +64,71 @@ class PayPalController extends Controller
     }
 
 
-
-    //  public function captureOrder(Request $request)
-    // {
-    //     $orderId = $request->query('token'); // PayPal sends token param on redirect
-
-    //     if (!$orderId) {
-    //         return response('Order ID missing', 400);
-    //     }
-
-    //     $client = $this->paypalClient();
-    //     $captureRequest = new OrdersCaptureRequest($orderId);
-    //     $captureRequest->prefer('return=representation');
-
-    //     try {
-    //         $response = $client->execute($captureRequest);
-
-    //         // You can save order/payment details to DB here if you want
-
-    //         // Redirect or return JSON as per your app
-    //         return redirect('/thankyou');  // Or a React route you want
-    //     } catch (\Exception $e) {
-    //         return response()->json(['error' => $e->getMessage()], 500);
-    //     }
-    // }
-
-    // public function cancel()
-    // {
-    //     return 'Payment cancelled by user.';
-    // }
-
     public function captureOrder(Request $request)
     {
-        $orderId = $request->query('token'); // PayPal sends token as "token"
+        $paypalOrderId = $request->query('token'); // PayPal order ID
+        $dbOrderId = $request->query('order_id');   // Laravel DB order ID
 
-        if (!$orderId) {
-            return response('Order ID missing', 400);
+        if (!$paypalOrderId || !$dbOrderId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Missing token or order_id in request'
+            ], 400);
         }
 
         $client = $this->paypalClient();
-        $captureRequest = new OrdersCaptureRequest($orderId);
+        $captureRequest = new \PayPalCheckoutSdk\Orders\OrdersCaptureRequest($paypalOrderId);
         $captureRequest->prefer('return=representation');
 
         try {
             $response = $client->execute($captureRequest);
 
-            // Extract desired details
-            $paypalOrderId = $response->result->id ?? '';
-            $status = $response->result->status ?? '';
-            $payerEmail = $response->result->payer->email_address ?? '';
+            // Update order in database
+            $order = Order::where('order_id', $dbOrderId)->firstOrFail();
+            $order->payment_status = 'completed';
+            $order->order_status = 'processing';
+            $order->paypal_order_id = $paypalOrderId;
+            $order->payer_email = $response->result->payer->email_address ?? '';
+            $order->save();
+            return redirect()->away(env('FRONTEND_URL') . "/thankyou?order_id={$dbOrderId}");
+            /* return response()->json([
+                'status' => 'success',
+                'message' => 'Payment captured successfully',
+                'order' => $order,
+                'paypal_response' => $response->result
+            ]); */
 
-            // Redirect to React with success and key data
-            return redirect()->to(config('app.frontend_url') . '/checkout?' . http_build_query([
-                'paypal_status' => 'success',
-                'paypal_order_id' => $paypalOrderId,
-                'status' => $status,
-                'payer_email' => $payerEmail,
-            ]));
         } catch (\Exception $e) {
-            // Log error if needed
-            return redirect()->to(config('app.frontend_url') . '/checkout?paypal_status=fail');
+            // Update order as failed
+            $order = Order::find($dbOrderId);
+            if ($order) {
+                $order->payment_status = 'failed';
+                $order->order_status = 'cancelled';
+                $order->save();
+            }
+
+            return redirect()->away(env('FRONTEND_URL') . "/payment-failed?order_id={$dbOrderId}&error=" . urlencode($e->getMessage()));
+            // Return JSON error
+            /* return response()->json([
+                'status' => 'error',
+                'message' => 'PayPal capture failed',
+                'error' => $e->getMessage()
+            ], 500); */
         }
     }
 
 
     public function cancel(Request $request)
     {
-        $orderId = session('paypal_order_id');
+        $dbOrderId = $request->query('order_id');
+        $order = Order::find($dbOrderId);
+        if ($order) {
+            $order->payment_status = 'failed';
+            $order->order_status = 'cancelled';
+            $order->save();
+        }
 
-        // Optional: Remove session value
-        session()->forget('paypal_order_id');
-
-        return redirect()->to(config('app.frontend_url') . '/checkout?' . http_build_query([
-            'paypal_status' => 'cancelled',
-            'paypal_order_id' => $orderId,
-        ]));
+        return redirect()->away(env('FRONTEND_URL') . "/payment-failed?order_id={$dbOrderId}&error=" . urlencode("Payment cancelled by user"));
     }
 
 }
