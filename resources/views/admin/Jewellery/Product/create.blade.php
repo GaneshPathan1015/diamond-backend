@@ -518,7 +518,7 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="woocommerce-section">
+                                    {{-- <div class="woocommerce-section">
                                         <div class="woocommerce-section-title">Product Images</div>
                                         <div class="row">
                                         <!-- Featured Image Section -->
@@ -546,7 +546,7 @@
                                                 <div class="image-preview-container" id="galleryImagesPreview"></div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> --}}
                                 </div>
 
                                 <!-- Variations Tab -->
@@ -566,7 +566,8 @@
                                                         <th>Price (₹) *</th>
                                                         <th>Regular Price (₹) *</th>
                                                         <th>Stock</th>
-                                                        <th>Images</th>                                                        
+                                                        <th>Images</th>
+                                                        <th>Video</th>                                                        
                                                         <th>Actions</th>
                                                     </tr>
                                                 </thead>
@@ -622,6 +623,24 @@
                                                                 <i class="fas fa-plus me-1"></i> Add Images
                                                             </button>
                                                             <input type="file" name="variations[0][images][]" multiple class="d-none variation-image-input" data-index="0">
+                                                            <div class="error-message" id="error-variations-0-images"></div>
+                                                        </td>
+                                                        <td>
+                                                            <input type="file" name="variations[0][video]" 
+                                                                   class="form-control variation-video-input" 
+                                                                   accept="video/*">
+                                                                   <span style="color:red; font-weight:bold; font-size:14px;">
+                                                                    File size exceeds the maximum allowed limit of 50 MB. Please upload a smaller file.
+                                                                </span>
+                                                            <div class="video-preview mt-2" style="display: none;">
+                                                                <video width="120" height="80" controls>
+                                                                    <source src="" type="video/mp4">
+                                                                    Your browser does not support the video tag.
+                                                                </video>
+                                                                <button type="button" class="btn btn-sm btn-danger remove-video mt-1">Remove</button>
+                                                                
+                                                                
+                                                            </div>
                                                         </td>
                                                         <td class="action-cell">
                                                             <button type="button" class="btn btn-sm btn-danger remove-variation-row">
@@ -629,7 +648,7 @@
                                                             </button>
                                                         </td>
                                                     </tr>
-                                                </tbody>
+                                                </tbody> 
                                             </table>
                                         </div>
                                             
@@ -905,6 +924,22 @@
                                 <i class="fas fa-plus me-1"></i> Add Images
                             </button>
                             <input type="file" name="variations[${variationCount}][images][]" multiple class="d-none variation-image-input" data-index="${variationCount}">
+                            <div class="error-message" id="error-variations-${variationCount}-images"></div>
+                        </td>
+                        <td>
+                            <input type="file" name="variations[${variationCount}][video]" 
+                                class="form-control variation-video-input" 
+                                accept="video/*">
+                                <span style="color:red; font-weight:bold; font-size:14px;">
+                                                                    File size exceeds the maximum allowed limit of 50 MB. Please upload a smaller file.
+                                                                </span>
+                            <div class="video-preview mt-2" style="display: none;">
+                                <video width="120" height="80" controls>
+                                    <source src="" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                                <button type="button" class="btn btn-sm btn-danger remove-video mt-1">Remove</button>
+                            </div>
                         </td>
                         <td class="action-cell">
                             <button type="button" class="btn btn-sm btn-danger remove-variation-row">
@@ -1266,5 +1301,29 @@
         toggleBuildFields();
         $('select[name="is_build_product"]').change(toggleBuildFields);
     });
+    $(document).on('change', '.variation-video-input', function() {
+    const file = this.files[0];
+    const preview = $(this).siblings('.video-preview');
+    
+    if (file) {
+        const videoURL = URL.createObjectURL(file);
+        preview.find('source').attr('src', videoURL);
+        preview.find('video')[0].load();
+        preview.show();
+    }
+});
+
+$(document).on('click', '.remove-video', function() {
+    const input = $(this).closest('td').find('.variation-video-input');
+    input.val('');
+    $(this).closest('.video-preview').hide();
+});
+
+// For existing videos in edit mode
+$(document).on('click', '.remove-existing-video', function() {
+    const variationId = $(this).data('variation-id');
+    $(this).closest('.existing-video').remove();
+    $(`input[name="variations[${variationId}][remove_video]"]`).val('1');
+});
     </script>
 @endsection

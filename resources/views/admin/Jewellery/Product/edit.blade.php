@@ -524,7 +524,7 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="woocommerce-section">
+                                    {{-- <div class="woocommerce-section">
                                         <div class="woocommerce-section-title">Product Images</div>
                                         <div class="row">
                                             <!-- Featured Image Section -->
@@ -566,10 +566,10 @@
                                                 <input type="hidden" name="remove_images" id="removeImages" value="">
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> --}}
                                 </div>
                                 
-
+ 
                                 <!-- Variations Tab -->
                                 <div class="tab-pane fade" id="variations">
                                     <div class="woocommerce-section">
@@ -587,7 +587,8 @@
                                                         <th>Price(₹)*</th>
                                                         <th>Regular Price(₹)*</th>
                                                         <th>Stock</th>
-                                                        <th>Images</th>                                                        
+                                                        <th>Images</th> 
+                                                        <th>Video</th>                                                       
                                                         <th>Actions</th>
                                                     </tr>
                                                 </thead>
@@ -688,6 +689,28 @@
                                                                 multiple 
                                                                 class="form-control mt-2">
                                                         </td>
+                                                        <td>
+                            @if($variation->video)
+                                <div class="existing-video mb-2">
+                                    <video width="120" height="80" controls>
+                                        <source src="{{ Storage::url('variation_videos/'.$variation->video) }}" type="video/mp4">
+                                    </video>
+                                    
+                                    <button type="button" class="btn btn-sm btn-danger remove-existing-video mt-1" 
+                                            data-variation-id="{{ $i }}">Remove</button>
+                                    <input type="hidden" name="variations[{{ $i }}][existing_video]" value="{{ $variation->video }}">
+                            
+                                </div>
+                            @endif
+                            <input type="file" name="variations[{{ $i }}][video]" 
+                                   class="form-control variation-video-input" 
+                                   accept="video/*">
+                                   <span style="color:red; font-weight:bold; font-size:14px;">
+                                                                    File size exceeds the maximum allowed limit of 50 MB. Please upload a smaller file.
+                                                                </span>
+                            <input type="hidden" name="variations[{{ $i }}][remove_video]" value="0">
+                            
+                        </td>
                                                         <td class="action-cell">
                                                             <button type="button" class="btn btn-sm btn-danger remove-variation-row">
                                                                 <i class="fas fa-trash"></i>
@@ -977,6 +1000,21 @@
                     <td class="variation-image-cell" id="variation-images-${variationCount}">
                         <div class="d-flex flex-wrap gap-2"></div>
                         <input type="file" name="variations[${variationCount}][images][]" multiple class="form-control mt-2">
+                        <div class="error-message" id="error-variations-${variationCount}-images"></div>
+                    </td>
+                    <td>
+                        <input type="file" name="variations[${variationCount}][video]" class="form-control variation-video-input" accept="video/*">
+                        <span style="color:red; font-weight:bold; font-size:14px;">
+                                                                    File size exceeds the maximum allowed limit of 50 MB. Please upload a smaller file.
+                                                                </span>
+                        <div class="video-preview mt-2" style="display: none;">
+                            <video width="120" height="80" controls>
+                                <source src="" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <button type="button" class="btn btn-sm btn-danger remove-video mt-1">Remove</button>
+                            
+                        </div>
                     </td>
                     <td class="action-cell">
                         <button type="button" class="btn btn-sm btn-danger remove-variation-row">
@@ -1377,5 +1415,30 @@
         toggleBuildFields();
         $('select[name="is_build_product"]').change(toggleBuildFields);
     });
+    // Video preview functionality
+$(document).on('change', '.variation-video-input', function() {
+    const file = this.files[0];
+    const preview = $(this).siblings('.video-preview');
+    
+    if (file) {
+        const videoURL = URL.createObjectURL(file);
+        preview.find('source').attr('src', videoURL);
+        preview.find('video')[0].load();
+        preview.show();
+    }
+});
+
+$(document).on('click', '.remove-video', function() {
+    const input = $(this).closest('td').find('.variation-video-input');
+    input.val('');
+    $(this).closest('.video-preview').hide();
+});
+
+// For existing videos in edit mode
+$(document).on('click', '.remove-existing-video', function() {
+    const variationId = $(this).data('variation-id');
+    $(this).closest('.existing-video').remove();
+    $(`input[name="variations[${variationId}][remove_video]"]`).val('1');
+});
     </script>
 @endsection

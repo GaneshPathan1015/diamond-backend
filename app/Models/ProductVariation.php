@@ -17,6 +17,7 @@ class ProductVariation extends Model
         'regular_price',
         'sku', 
         'images',
+        'video',
         'master_sku', 
         'stock', 
         'weight', 
