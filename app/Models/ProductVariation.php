@@ -42,8 +42,17 @@ class ProductVariation extends Model
         }
 
         return array_map(function ($image) {
-            return asset($image); // or 'storage/variation_images/' . $image if needed
+            return asset('storage/variation_images/' . $image);
         }, $images);
+    }
+    
+    // Accessor for video URL
+    public function getVideoUrlAttribute()
+    {
+        if (!empty($this->video)) {
+            return asset('storage/variation_videos/' . $this->video);
+        }
+        return null;
     }
     
     protected static function booted()
@@ -52,12 +61,26 @@ class ProductVariation extends Model
             // Delete associated images
             if ($variation->images) {
                 foreach ($variation->images as $imagePath) {
-                    if (Storage::disk('public')->exists($imagePath)) {
-                        Storage::disk('public')->delete($imagePath);
+                    $filename = basename($imagePath);
+                    if (Storage::disk('public')->exists("variation_images/$filename")) {
+                        Storage::disk('public')->delete("variation_images/$filename");
                     }
                 }
             }
         });
+
+        static::updating(function ($variation) {
+        $originalVideo = $variation->getOriginal('video');
+        $newVideo = $variation->video;
+        
+        // If video is being changed or removed, delete the old video
+        if ($originalVideo && $originalVideo !== $newVideo) {
+            $videoPath = "variation_videos/" . $originalVideo;
+            if (Storage::disk('public')->exists($videoPath)) {
+                Storage::disk('public')->delete($videoPath);
+            }
+        }
+    });
     }
 
     public function getImageFilenames()

@@ -690,27 +690,30 @@
                                                                 class="form-control mt-2">
                                                         </td>
                                                         <td>
-                            @if($variation->video)
-                                <div class="existing-video mb-2">
-                                    <video width="120" height="80" controls>
-                                        <source src="{{ Storage::url('variation_videos/'.$variation->video) }}" type="video/mp4">
-                                    </video>
-                                    
-                                    <button type="button" class="btn btn-sm btn-danger remove-existing-video mt-1" 
-                                            data-variation-id="{{ $i }}">Remove</button>
-                                    <input type="hidden" name="variations[{{ $i }}][existing_video]" value="{{ $variation->video }}">
-                            
-                                </div>
-                            @endif
-                            <input type="file" name="variations[{{ $i }}][video]" 
-                                   class="form-control variation-video-input" 
-                                   accept="video/*">
-                                   <span style="color:red; font-weight:bold; font-size:14px;">
-                                                                    File size exceeds the maximum allowed limit of 50 MB. Please upload a smaller file.
-                                                                </span>
-                            <input type="hidden" name="variations[{{ $i }}][remove_video]" value="0">
-                            
-                        </td>
+                                                            @if($variation->video)
+                                                                <div class="existing-video mb-2">
+                                                                    <video width="120" height="80" controls>
+                                                                        <source src="{{ Storage::url('variation_videos/'.$variation->video) }}" type="video/mp4">
+                                                                        Your browser does not support the video tag.
+                                                                    </video>
+                                                                    <br>
+                                                                    <button type="button" class="btn btn-sm btn-danger remove-existing-video mt-1" 
+                                                                            data-variation-id="{{ $i }}">Remove Video</button>
+                                                                    <input type="hidden" name="variations[{{ $i }}][existing_video]" value="{{ $variation->video }}">
+                                                                </div>
+                                                            @endif
+                                                            
+                                                            <input type="file" name="variations[{{ $i }}][video]" 
+                                                                class="form-control variation-video-input" 
+                                                                accept="video/*">
+                                                            
+                                                            <input type="hidden" name="variations[{{ $i }}][remove_video]" value="0" class="remove-video-flag">
+                                                            
+                                                            <div class="text-muted small mt-1">
+                                                                Max file size: 50MB. Supported formats: MP4, AVI, MOV.
+                                                            </div>
+                                                        </td>
+
                                                         <td class="action-cell">
                                                             <button type="button" class="btn btn-sm btn-danger remove-variation-row">
                                                                 <i class="fas fa-trash"></i>
@@ -1002,18 +1005,24 @@
                         <input type="file" name="variations[${variationCount}][images][]" multiple class="form-control mt-2">
                         <div class="error-message" id="error-variations-${variationCount}-images"></div>
                     </td>
-                    <td>
-                        <input type="file" name="variations[${variationCount}][video]" class="form-control variation-video-input" accept="video/*">
-                        <span style="color:red; font-weight:bold; font-size:14px;">
-                                                                    File size exceeds the maximum allowed limit of 50 MB. Please upload a smaller file.
-                                                                </span>
+                     <td>
+                        <input type="file" name="variations[${variationCount}][video]" 
+                            class="form-control variation-video-input" 
+                            accept="video/*">
+                        
                         <div class="video-preview mt-2" style="display: none;">
                             <video width="120" height="80" controls>
                                 <source src="" type="video/mp4">
                                 Your browser does not support the video tag.
                             </video>
-                            <button type="button" class="btn btn-sm btn-danger remove-video mt-1">Remove</button>
-                            
+                            <button type="button" class="btn btn-sm btn-danger remove-video-btn mt-1" style="display: none;">
+                                Remove New Video
+                            </button>
+                        </div>
+                        
+                        <input type="hidden" name="variations[${variationCount}][remove_video]" value="0">
+                        <div class="text-muted small mt-1">
+                            Max file size: 50MB. Supported formats: MP4, AVI, MOV.
                         </div>
                     </td>
                     <td class="action-cell">
@@ -1415,30 +1424,37 @@
         toggleBuildFields();
         $('select[name="is_build_product"]').change(toggleBuildFields);
     });
-    // Video preview functionality
-$(document).on('change', '.variation-video-input', function() {
-    const file = this.files[0];
-    const preview = $(this).siblings('.video-preview');
     
-    if (file) {
-        const videoURL = URL.createObjectURL(file);
-        preview.find('source').attr('src', videoURL);
-        preview.find('video')[0].load();
-        preview.show();
-    }
-});
 
-$(document).on('click', '.remove-video', function() {
-    const input = $(this).closest('td').find('.variation-video-input');
-    input.val('');
-    $(this).closest('.video-preview').hide();
-});
+    // Remove existing video
+    $(document).on('click', '.remove-existing-video', function() {
+        const variationId = $(this).data('variation-id');
+        $(this).closest('.existing-video').remove();
+        $(`input[name="variations[${variationId}][remove_video]"]`).val('1');
+        
+        // Show upload field again
+        $(`input[name="variations[${variationId}][video]"]`).closest('td').find('.video-upload-field').show();
+    });
 
-// For existing videos in edit mode
-$(document).on('click', '.remove-existing-video', function() {
-    const variationId = $(this).data('variation-id');
-    $(this).closest('.existing-video').remove();
-    $(`input[name="variations[${variationId}][remove_video]"]`).val('1');
-});
+    // Handle new video upload preview
+    $(document).on('change', '.variation-video-input', function() {
+        const file = this.files[0];
+        const preview = $(this).siblings('.video-preview');
+        
+        if (file) {
+            if (file.size > 50 * 1024 * 1024) {
+                alert('File size exceeds the maximum allowed limit of 50 MB. Please upload a smaller file.');
+                $(this).val('');
+                return;
+            }
+            
+            const videoURL = URL.createObjectURL(file);
+            if (preview.length) {
+                preview.find('source').attr('src', videoURL);
+                preview.find('video')[0].load();
+                preview.show();
+            }
+        }
+    });
     </script>
 @endsection
