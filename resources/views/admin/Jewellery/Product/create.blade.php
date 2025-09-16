@@ -630,7 +630,7 @@
                                                                    class="form-control variation-video-input" 
                                                                    accept="video/*">
                                                                    <span style="color:red; font-weight:bold; font-size:14px;">
-                                                                    File size exceeds the maximum allowed limit of 50 MB. Please upload a smaller file.
+                                                                    File size exceeds the maximum allowed limit of 50 MB.
                                                                 </span>
                                                             <div class="video-preview mt-2" style="display: none;">
                                                                 <video width="120" height="80" controls>
@@ -857,7 +857,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script>
         function generateSlug(str) {
             return str.toLowerCase()
@@ -1301,29 +1301,51 @@
         toggleBuildFields();
         $('select[name="is_build_product"]').change(toggleBuildFields);
     });
-    $(document).on('change', '.variation-video-input', function() {
-    const file = this.files[0];
-    const preview = $(this).siblings('.video-preview');
     
-    if (file) {
-        const videoURL = URL.createObjectURL(file);
-        preview.find('source').attr('src', videoURL);
-        preview.find('video')[0].load();
-        preview.show();
-    }
-});
 
-$(document).on('click', '.remove-video', function() {
-    const input = $(this).closest('td').find('.variation-video-input');
-    input.val('');
-    $(this).closest('.video-preview').hide();
-});
+    // Video preview functionality
+    $(document).on('change', '.variation-video-input', function() {
+        const file = this.files[0];
+        const preview = $(this).siblings('.video-preview');
+        const removeBtn = $(this).siblings('.remove-video-btn');
+        
+        if (file) {
+            // Check file size (max 50MB)
+            if (file.size > 50 * 1024 * 1024) {
+                alert('File size exceeds the maximum allowed limit of 50 MB. Please upload a smaller file.');
+                $(this).val('');
+                return;
+            }
+            
+            const videoURL = URL.createObjectURL(file);
+            preview.find('source').attr('src', videoURL);
+            preview.find('video')[0].load();
+            preview.show();
+            removeBtn.show();
+        }
+    });
 
-// For existing videos in edit mode
-$(document).on('click', '.remove-existing-video', function() {
-    const variationId = $(this).data('variation-id');
-    $(this).closest('.existing-video').remove();
-    $(`input[name="variations[${variationId}][remove_video]"]`).val('1');
-});
+    // Remove video
+    $(document).on('click', '.remove-video-btn', function() {
+        const input = $(this).siblings('.variation-video-input');
+        const preview = $(this).siblings('.video-preview');
+        const hiddenRemoveInput = $(this).siblings('input[type="hidden"][name*="remove_video"]');
+        
+        input.val('');
+        preview.hide();
+        $(this).hide();
+        
+        // Set flag to remove existing video on server
+        if (hiddenRemoveInput.length) {
+            hiddenRemoveInput.val('1');
+        }
+    });
+
+    // For existing videos in edit mode
+    $(document).on('click', '.remove-existing-video', function() {
+        const variationId = $(this).data('variation-id');
+        $(this).closest('.existing-video').remove();
+        $(`input[name="variations[${variationId}][remove_video]"]`).val('1');
+    });
     </script>
 @endsection

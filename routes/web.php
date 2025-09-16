@@ -52,6 +52,9 @@ use App\Http\Controllers\Jewellery\CollectionController;
 use App\Http\Controllers\ProductImportController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Api\PayPalController;
+use App\Http\Controllers\Jewellery\CouponController;
+
+
 
 Route::get('/import-products', [ProductImportController::class, 'showForm'])->name('products.import.form');
 Route::post('/import-products', [ProductImportController::class, 'import'])->name('products.import');
@@ -499,6 +502,15 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::delete('collections/destroy/{id}','destroy')->name('collections.destroy');
         Route::post('collections/status/{id}', 'updateStatus')->name('collections.status');
         Route::post('collections/display/{id}', 'updateDisplay')->name('collections.display');
+    });
+
+    Route::controller(\App\Http\Controllers\Jewellery\CouponController::class)->group(function () {
+        Route::get('/coupons', 'index')->name('admin.coupons.index');
+        Route::post('/coupons', 'store')->name('admin.coupons.store');
+        Route::get('/coupons/{coupon}/edit', 'edit')->name('admin.coupons.edit');
+        Route::put('/coupons/{coupon}', 'update')->name('admin.coupons.update');
+        Route::delete('/coupons/{coupon}', 'destroy')->name('admin.coupons.destroy');
+        Route::post('/coupons/{coupon}/status', 'updateStatus')->name('admin.coupons.status');
     });
 
 });

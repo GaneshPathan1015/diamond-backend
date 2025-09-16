@@ -134,6 +134,14 @@
             </ul>
         </li>
 
+        <!-- Coupon -->
+        <li class="menu-item {{ request()->routeIs('admin.coupons.index') ? 'active' : '' }}">
+            <a href="{{ route('admin.coupons.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-coupon"></i>
+                <div class="text-truncate">Coupon</div>
+            </a>
+        </li>
+
         <!-- ORDERS -->
         <li class="menu-item {{ request()->routeIs('orders.index') ? 'active' : '' }}">
             <a href="{{ route('orders.index') }}" class="menu-link">

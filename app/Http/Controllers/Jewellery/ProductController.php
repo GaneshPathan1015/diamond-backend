@@ -508,16 +508,23 @@ class ProductController extends Controller
                 }
                 
                 // Process video
+                $videoName = null;
+
                 if ($request->hasFile("variations.$index.video")) {
                     $video = $request->file("variations.$index.video");
                     if ($video->isValid()) {
+                        // Delete old video if exists
+                        if (!empty($variation['existing_video'])) {
+                            Storage::disk('public')->delete("variation_videos/{$variation['existing_video']}");
+                        }
+                        
                         $videoName = 'variation_video_' . time() . '_' . Str::random(10) . '.' . $video->extension();
                         $video->storeAs('variation_videos', $videoName, 'public');
                     }
                 } elseif (isset($variation['existing_video']) && !isset($variation['remove_video'])) {
                     $videoName = $variation['existing_video'];
                 }
-                
+
                 // Handle video removal
                 if (isset($variation['remove_video']) && $variation['remove_video'] == '1') {
                     if (!empty($variation['existing_video'])) {
@@ -525,7 +532,6 @@ class ProductController extends Controller
                     }
                     $videoName = null;
                 }
-
                 // Update existing variation
                 if (isset($variation['id']) && $variation['id'] !== 'new') {
                     $existingVariation = $product->variations()->find($variation['id']);
@@ -537,14 +543,12 @@ class ProductController extends Controller
                             'stock' => $variation['stock'] ?? 0,
                             'metal_color_id' => $variation['metal_color_id'] ?? null,
                             'shape_id' => $variation['shape_id'] ?? null,
-                            'images' => $imagePaths
+                            'images' => $imagePaths,
+                            'video' => $videoName // Always include video field
                         ];
-                        
-                        if ($videoName !== null) {
-                            $variationData['video'] = $videoName;
-                        }
-                        
+
                         $existingVariation->update($variationData);
+
                         $usedVariationIds[] = $existingVariation->id;
                         continue;
                     }
@@ -709,13 +713,12 @@ class ProductController extends Controller
         return response()->json($styleGroups);
     }
 
-
-    public function destroy($id)
+     public function destroy($id)
     {
         $product = Product::findOrFail($id);
         
-        // Delete variations and their files
         foreach ($product->variations as $variation) {
+            // Delete variation images
             if (!empty($variation->images)) {
                 foreach ($variation->images as $imagePath) {
                     if (!empty($imagePath)) {
@@ -724,8 +727,12 @@ class ProductController extends Controller
                 }
             }
             
+            // Delete variation video
             if (!empty($variation->video)) {
-                Storage::disk('public')->delete("variation_videos/{$variation->video}");
+                $videoPath = "variation_videos/" . $variation->video;
+                if (Storage::disk('public')->exists($videoPath)) {
+                    Storage::disk('public')->delete($videoPath);
+                }
             }
             
             $variation->delete();
@@ -756,7 +763,7 @@ class ProductController extends Controller
             'variations.*.regular_price'  => 'required|numeric|min:0',
             'variations.*.price'          => 'required|numeric|min:0|lte:variations.*.regular_price',
             'variations.*.shape_id'       => 'required|exists:diamond_shape_master,id',
-            'variations.*.video'          => 'sometimes|mimetypes:video/avi,video/mpeg,video/quicktime,video/mp4|max:50000',
+            'variations.*.video'          => 'sometimes|mimetypes:video/avi,video/mpeg,video/quicktime,video/mp4|max:51200',
         ];
 
         if (request('is_build_product') == '1') {
@@ -856,8 +863,8 @@ class ProductController extends Controller
             'variations.*.price.lte' => 'Price must be less than or equal to Regular Price.',
             'variations.*.shape_id.required' => 'Shape is required for all variations.',
             'variations.*.metal_color_id.required' => 'Metal color is required for all variations.',
-            'variations.*.video.mimetypes' => 'Video must be a valid video file (avi, mpeg, quicktime, mp4).',
-            'variations.*.video.max' => 'Video size must not exceed 50MB.',
+            'variations.*.video.max' => 'The video size cannot exceed 50MB. Please upload a smaller video.',
+            'variations.*.video.mimetypes' => 'The video file is in an invalid format. Only AVI, MPEG, QuickTime, or MP4 files are allowed.',
             'psc_id.required'         => 'Style Category is required when Build Product is selected.',
             'categories_id.required'  => 'Product Category is required when Build Product is not selected.',
         ];
