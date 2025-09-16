@@ -23,7 +23,6 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CouponController;
 /*
-
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
