@@ -21,7 +21,9 @@ use App\Http\Controllers\DiamondMaster\DiamondMasterController;
 use App\Http\Controllers\Api\PayPalController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CouponController;
 /*
+
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
@@ -102,3 +104,11 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('/paypal/create-order', [PayPalController::class, 'createOrder'])->name('paypal.create');
 Route::get('/paypal/capture', [PayPalController::class, 'captureOrder'])->name('paypal.capture');
 Route::get('/paypal/cancel', [PayPalController::class, 'cancel'])->name('paypal.cancel');
+
+
+    Route::get('coupons/', [CouponController::class, 'index']);
+    Route::post('coupons/', [CouponController::class, 'store']);
+    Route::get('coupons/{coupon}', [CouponController::class, 'show']);
+    Route::put('coupons/{coupon}', [CouponController::class, 'update']);
+    Route::delete('coupons/{coupon}', [CouponController::class, 'destroy']);
+    Route::patch('coupons/{coupon}/status', [CouponController::class, 'updateStatus']);
